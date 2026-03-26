@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # RabbitMQ: Mensageria assíncrona para seus alertas de BTC
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"   # Porta de dados
+      - "15672:15672" # Painel de controle (Login: guest/guest)
+
+  # Prometheus: Coleta métricas de latência do seu servidor Node
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  # Grafana: Visualização profissional dos seus dados de Trading e Segurança
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
