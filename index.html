@@ -1,80 +1,69 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <script
-  src="https://js.sentry-cdn.com/cf23f8572e034177f2c923d5eca7f89c.min.js"
-  crossorigin="anonymous"
-></script>
-    <meta charset="UTF-8">
-    <title>Visual Cripto Hub</title>
-    <style>
-        body { background-color: #0a0a0a; color: #00ff41; font-family: 'Courier New', monospace; margin: 20px; display: flex; flex-direction: column; min-height: 100vh; }
-        .header-meta { display: flex; justify-content: space-between; border-bottom: 1px solid #00ff41; padding-bottom: 5px; }
-        .chart-container { border: 2px solid #003300; height: 600px; transition: all 0.4s ease; margin-top: 10px; flex-grow: 1; }
-        .alert-active { border: 5px solid #ff0000; box-shadow: 0 0 20px #ff0000; }
-        .gain-active { border: 5px solid #00ff41; box-shadow: 0 0 20px #00ff41; }
-        /* Estilo do Rodapé */
-        footer { text-align: center; padding: 15px; border-top: 1px solid #003300; margin-top: auto; font-size: 0.8rem; color: #008800; }
-    </style>
-</head>
-<body>
-    <div class="header-meta">
-        <span>🚀 VISUAL CRIPTO HUB</span>
-        <span id="ping">Latência: -- ms</span>
-    </div>
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+<script>
+    // Configurações do ecossistema Visual Studio & Security
+    const TELEGRAM_TOKEN = '8647035778:AAGe5pkNdG10peE82phy8_hAp0D3VHJ9g7c';
+    const TELEGRAM_CHAT_ID = '5295558906'; // Pegue no getUpdates após enviar um /start para o bot
 
-    <div class="chart-container" id="main_hub">
-        <div id="tradingview_btc"></div>
-    </div>
+    // Inicializa Widget TradingView (BTC/USDT no tempo de 30min)
+    new TradingView.widget({
+        "width": "100%", "height": 600, "symbol": "BINANCE:BTCUSDT",
+        "interval": "30", "theme": "dark", "container_id": "tradingview_btc"
+    });
 
-    <audio id="alert_sound" src="https://www.soundjay.com/buttons/beep-07a.mp3"></audio>
+    let lastPrice = 0;
+    const alertAudio = document.getElementById('alert_sound');
 
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script>
-        // Inicializa Widget TradingView
-        new TradingView.widget({
-            "width": "100%", "height": 600, "symbol": "BINANCE:BTCUSDT",
-            "interval": "30", "theme": "dark", "container_id": "tradingview_btc"
-        });
+    // Função de Alerta via Telegram
+    async function notifyTelegram(msg) {
+        try {
+            await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: `🚀 [VISUAL CRIPTO ALERT]\n\n${msg}`,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (e) { console.error("Erro ao notificar Telegram"); }
+    }
 
-        let lastPrice = 0;
-        const alertAudio = document.getElementById('alert_sound');
+    async function updateHub() {
+        const start = Date.now();
+        try {
+            // Fetch da API da Binance
+            const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+            const data = await res.json();
+            
+            // Atualiza Latência de Rede
+            document.getElementById('ping').innerText = `Latência: ${Date.now() - start}ms`;
 
-        async function updateHub() {
-            const start = Date.now();
-            try {
-                // Fetch da API da Binance (Pública, sem expor chaves do .env)
-                const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
-                const data = await res.json();
-                
-                // Atualiza Latência
-                document.getElementById('ping').innerText = `Latência: ${Date.now() - start}ms`;
+            const price = parseFloat(data.price);
+            const container = document.getElementById('main_hub');
 
-                const price = parseFloat(data.price);
-                const container = document.getElementById('main_hub');
+            if (lastPrice > 0) {
+                const change = ((price - lastPrice) / lastPrice) * 100;
 
-                if (lastPrice > 0) {
-                    const change = ((price - lastPrice) / lastPrice) * 100;
-
-                    // Alerta em variações de 0.1%
-                    if (Math.abs(change) >= 0.1) {
-                        alertAudio.play();
-                        container.className = change > 0 ? 'chart-container gain-active' : 'chart-container alert-active';
-                    } else {
-                        container.className = 'chart-container';
-                    }
+                // Alerta em variações de 0.1% (Alta ou Queda)
+                if (Math.abs(change) >= 0.1) {
+                    alertAudio.play();
+                    
+                    const direction = change > 0 ? '🟢 ALTA' : '🔴 QUEDA';
+                    container.className = change > 0 ? 'chart-container gain-active' : 'chart-container alert-active';
+                    
+                    // Envia alerta para o seu Telegram
+                    notifyTelegram(`*Movimentação Detectada!*\nSentido: ${direction}\nVariação: ${change.toFixed(2)}%\nPreço: $${price.toLocaleString()}`);
+                } else {
+                    container.className = 'chart-container';
                 }
-                lastPrice = price;
-            } catch (e) { console.error("Falha no Sync"); }
+            }
+            lastPrice = price;
+        } catch (e) { 
+            console.error("Falha no Sync");
+            if (typeof Sentry !== 'undefined') Sentry.captureException(e); 
         }
+    }
 
-        setInterval(updateHub, 5000); // Monitoramento a cada 5s
-    </script>
-
-    <footer>
-        © 2026 Visual Studio & Security. Todos os direitos reservados.
-        <br>
-        Dashboard de conformidade de Cybersecurity & Trading.
-    </footer>
-</body>
-</html>
+    // Intervalo de 5 segundos para não sobrecarregar a API nem o seu bot
+    setInterval(updateHub, 5000); 
+</script>
