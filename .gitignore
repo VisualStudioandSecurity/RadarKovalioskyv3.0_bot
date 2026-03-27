@@ -1,3 +1,12 @@
-﻿node_modules
+# Ignorar arquivos de configuração com tokens
+config.js
+secrets.json
 .env
+
+# Ignorar pastas do sistema e logs
+node_modules/
+npm-debug.log*
 .DS_Store
+
+# Ignorar o cache do VS Code
+.vscode/
