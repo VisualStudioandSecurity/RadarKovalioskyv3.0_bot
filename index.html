@@ -26,82 +26,49 @@
 
     <audio id="alert_sound" src="https://www.soundjay.com/buttons/beep-07a.mp3" preload="auto"></audio>
 
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
-        // Credenciais Kovaliosky
-        const TG_TOKEN = '8735885469:AAGgobg-PvU_WPP4wiJ6WYD0zgWp-PKl7O0'
-        const TG_CHAT_ID = '851671197'
+    // Configurações Atualizadas
+    const TELEGRAM_TOKEN = '8735885469:AAGgobg-PvU_WPP4wiJ6WYD0zgWp-PKl7O0'; 
+    const TELEGRAM_CHAT_ID = '5295558906'; 
 
-        // 1. Inicializa o Gráfico no Intervalo de 30 MINUTOS
-        new TradingView.widget({
-            "width": "100%",
-            "height": 650,
-            "symbol": "BINANCE:BTCUSDT",
-            "interval": "30", // Configurado para 30 minutos
-            "theme": "dark",
-            "style": "1", // Velas (Candlesticks)
-            "container_id": "tradingview_btc",
-            "timezone": "America/Sao_Paulo",
-            "hide_side_toolbar": false,
-            "allow_symbol_change": true,
-            "details": true,
-            "hotlist": true,
-            "calendar": true
-        });
+    const alertAudio = document.getElementById('alert_sound');
+    let lastPrice = 0;
 
-        let lastPrice = 0;
-        const alertAudio = document.getElementById('alert_sound');
+    async function notifyTelegram(msg) {
+        try {
+            await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg })
+            });
+        } catch (e) { console.error("Erro Telegram"); }
+    }
 
-        // 2. Função de Notificação Telegram
-        async function sendAlert(message) {
-            try {
-                await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: TG_CHAT_ID,
-                        text: `⚠️ [VISUAL CRIPTO ALERT]\n\n${message}`,
-                        parse_mode: 'Markdown'
-                    })
-                });
-            } catch (e) { Sentry.captureException(e); }
-        }
+    async function updateHub() {
+        try {
+            const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+            const data = await res.json();
+            const price = parseFloat(data.price);
+            const container = document.getElementById('main_hub');
 
-        // 3. Monitor de Preço e Som
-        async function checkMarket() {
-            const start = Date.now();
-            try {
-                const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
-                const data = await res.json();
-                const price = parseFloat(data.price);
-                const container = document.getElementById('main_hub');
+            if (lastPrice > 0) {
+                const change = ((price - lastPrice) / lastPrice) * 100;
 
-                document.getElementById('ping').innerText = `LATÊNCIA: ${Date.now() - start}MS`;
-
-                if (lastPrice > 0) {
-                    const change = ((price - lastPrice) / lastPrice) * 100;
-
-                    // Gatilho de alerta para variação de 0.1% ou exaustão detectada
-                    if (Math.abs(change) >= 0.1) {
-                        alertAudio.play().catch(e => console.log("Aguardando interação para áudio"));
-                        
-                        const type = change > 0 ? "ALTA" : "QUEDA";
-                        container.className = change > 0 ? 'chart-container gain-active' : 'chart-container alert-active';
-                        
-                        sendAlert(`*Movimentação M30 Detectada!*\nSentido: ${type}\nVariação: ${change.toFixed(2)}%\nPreço: $${price.toLocaleString()}`);
-                    } else {
-                        container.className = 'chart-container';
-                    }
+                // SENSIBILIDADE DE TESTE: 0.001 (Vai apitar quase o tempo todo)
+                if (Math.abs(change) >= 0.001) { 
+                    alertAudio.play().catch(() => console.log("Clique na página para ativar o som!"));
+                    container.className = change > 0 ? 'chart-container gain-active' : 'chart-container alert-active';
+                    
+                    notifyTelegram(`🚀 HUB ATIVO\nPreço: $${price}\nVariação: ${change.toFixed(4)}%`);
                 }
-                lastPrice = price;
-            } catch (e) { 
-                console.error("Falha no Sync"); 
-                if (typeof Sentry !== 'undefined') Sentry.captureException(e);
             }
-        }
+            lastPrice = price;
+        } catch (e) { console.error("Erro na API"); }
+    }
 
-        // Executa monitoramento a cada 10 segundos para precisão no M30
-        setInterval(checkMarket, 10000);
+    // Checagem rápida a cada 3 segundos para teste
+    setInterval(updateHub, 3000);
+</script>
     </script>
 
     <footer>
