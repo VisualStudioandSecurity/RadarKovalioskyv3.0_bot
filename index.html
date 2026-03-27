@@ -1,88 +1,87 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-pt">
 <head>
-    <meta name="google-adsense-account" content="ca-pub-4389870681468404">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4389870681468404" crossorigin="anonymous"></script>
-    
     <script src="https://js.sentry-cdn.com/cf23f8572e034177f2c923d5eca7f89c.min.js" crossorigin="anonymous"></script>
     <meta charset="UTF-8">
-    <title>Visual Cripto Hub | M30 Ad-Ready</title>
+    <title>Visual Cripto Hub | High Performance M30</title>
     <style>
-        body { background-color: #0a0a0a; color: #00ff41; font-family: 'Courier New', monospace; margin: 20px; display: flex; flex-direction: column; min-height: 100vh; }
-        .header-meta { display: flex; justify-content: space-between; border-bottom: 1px solid #00ff41; padding-bottom: 5px; }
-        .chart-container { border: 2px solid #003300; height: 600px; margin-top: 10px; flex-grow: 1; position: relative; }
-        .alert-active { border: 5px solid #ff0000; box-shadow: 0 0 20px #ff0000; }
-        .gain-active { border: 5px solid #00ff41; box-shadow: 0 0 20px #00ff41; }
-        footer { text-align: center; padding: 15px; border-top: 1px solid #003300; margin-top: auto; font-size: 0.8rem; color: #008800; }
+        /* Define que o corpo da página ocupa a altura total sem barras de rolagem */
+        body, html { 
+            background-color: #050505; 
+            color: #00f2ff; 
+            font-family: 'Courier New', monospace; 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            overflow: hidden; /* Remove rolagem da página principal */
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        /* Header fixo no topo */
+        .header-meta { 
+            display: flex; 
+            justify-content: space-between; 
+            border-bottom: 1px solid #00f2ff; 
+            padding: 5px 20px; 
+            font-weight: bold; 
+            font-size: 0.9rem;
+            background-color: #050505;
+            z-index: 10;
+        }
+
+        /* Container do gráfico: ocupa todo o espaço restante */
+        .chart-container { 
+            flex-grow: 1; /* Ocupa o resto da altura da flexbox */
+            width: 100%;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        /* Classes de Alerta */
+        .alert-active { box-shadow: inset 0 0 30px #ff003c; border: 2px solid #ff003c; }
+        .gain-active { box-shadow: inset 0 0 30px #00f2ff; border: 2px solid #00f2ff; }
+
+        /* Rodapé fixo no fundo */
+        footer { 
+            text-align: center; 
+            padding: 5px; 
+            border-top: 1px solid #1a1a1a; 
+            font-size: 0.75rem; 
+            color: #555; 
+            background-color: #050505;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
     <div class="header-meta">
-        <span>🚀 VISUAL CRIPTO HUB - M30</span>
-        <span id="ping">Status: Monitorando...</span>
+        <span>🚀 VISUAL CRIPTO HUB [M30 MONITOR]</span>
+        <span id="ping">LATÊNCIA: -- MS</span>
     </div>
 
     <div class="chart-container" id="main_hub">
-        <div id="tradingview_btc" style="height: 100%;"></div>
+        <div id="tradingview_btc" style="height: 100%; width: 100%;"></div>
     </div>
 
     <audio id="alert_sound" src="https://www.soundjay.com/buttons/beep-07a.mp3" preload="auto"></audio>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
-        // Configurações Kovaliosky
-        const TOKEN = '8735885469:AAGgobg-PvU_WPP4wiJ6WYD0zgWp-PKl7O0';
-        const CHAT_ID = '5295558906';
-        let lastPrice = 0;
+        // Credenciais Kovaliosky confirmadas
+        const TG_TOKEN = '8647035778:AAGe5pkNdG10peE82phy8_hAp0D3VHJ9g7c';
+        const TG_CHAT_ID = '5295558906';
 
-        // 1. CARREGAR GRÁFICO
+        // Inicializa o Widget - Usando 'autosize' para responsividade total
         new TradingView.widget({
-            "width": "100%", "height": "100%", "symbol": "BINANCE:BTCUSDT",
-            "interval": "30", "theme": "dark", "container_id": "tradingview_btc"
-        });
-
-        // 2. FUNÇÃO DE NOTIFICAÇÃO
-        async function sendTelegram(msg) {
-            try {
-                await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: CHAT_ID, text: msg })
-                });
-            } catch (e) { console.error("Erro Telegram"); }
-        }
-
-        // 3. MONITOR DE PREÇO E APITO
-        async function updateHub() {
-            try {
-                const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
-                const data = await res.json();
-                const price = parseFloat(data.price);
-                const container = document.getElementById('main_hub');
-                const audio = document.getElementById('alert_sound');
-
-                if (lastPrice > 0) {
-                    const diff = Math.abs(((price - lastPrice) / lastPrice) * 100);
-
-                    // Sensibilidade de 0.2 para teste sonoro imediato
-                    if (diff >= 0.2) {
-                        audio.play().catch(() => console.log("Clique na tela para ativar som"));
-                        container.className = price > lastPrice ? 'chart-container gain-active' : 'chart-container alert-active';
-                        sendTelegram(`⚠️ Alerta BTC: $${price}`);
-                    } else {
-                        container.className = 'chart-container';
-                    }
-                }
-                lastPrice = price;
-            } catch (e) { console.error("Erro API"); }
-        }
-
-        setInterval(updateHub, 5000);
-        sendTelegram("🛡️ Visual Cripto Hub Online com AdSense!");
-    </script>
-
-    <footer>
-        © 2026 Visual Studio & Security. Especialista Senior: Guilherme Kovaliosky
-    </footer>
-</body>
-</html>
+            "autosize": true, // ESSENCIAL: Faz o gráfico ocupar a div pai
+            "symbol": "BINANCE:BTCUSDT",
+            "interval": "30", // Configurado para 30 minutos
+            "theme": "dark",
+            "style": "1", // Velas
+            "container_id": "tradingview_btc",
+            "timezone": "America/Sao_Paulo",
+            "hide_side_toolbar": false,
+            "allow_symbol_change": true,
+            "save_image": false,
+            "details":
