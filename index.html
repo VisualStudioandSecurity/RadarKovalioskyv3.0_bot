@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+    <meta name="google-adsense-account" content="ca-pub-4389870681468404">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4389870681468404" crossorigin="anonymous"></script>
+    
     <script src="https://js.sentry-cdn.com/cf23f8572e034177f2c923d5eca7f89c.min.js" crossorigin="anonymous"></script>
     <meta charset="UTF-8">
-    <title>Visual Cripto Hub | M30</title>
+    <title>Visual Cripto Hub | M30 Ad-Ready</title>
     <style>
         body { background-color: #0a0a0a; color: #00ff41; font-family: 'Courier New', monospace; margin: 20px; display: flex; flex-direction: column; min-height: 100vh; }
         .header-meta { display: flex; justify-content: space-between; border-bottom: 1px solid #00ff41; padding-bottom: 5px; }
@@ -32,7 +35,7 @@
         const CHAT_ID = '5295558906';
         let lastPrice = 0;
 
-        // 1. CARREGAR GRÁFICO (Para evitar a tela preta)
+        // 1. CARREGAR GRÁFICO
         new TradingView.widget({
             "width": "100%", "height": "100%", "symbol": "BINANCE:BTCUSDT",
             "interval": "30", "theme": "dark", "container_id": "tradingview_btc"
@@ -61,9 +64,9 @@
                 if (lastPrice > 0) {
                     const diff = Math.abs(((price - lastPrice) / lastPrice) * 100);
 
-                    // SENSIBILIDADE DE TESTE: 0.001 (Aumente para 0.1 depois)
+                    // Sensibilidade de 0.001 para teste sonoro imediato
                     if (diff >= 0.001) {
-                        audio.play().catch(() => {}); // Tenta apitar
+                        audio.play().catch(() => console.log("Clique na tela para ativar som"));
                         container.className = price > lastPrice ? 'chart-container gain-active' : 'chart-container alert-active';
                         sendTelegram(`⚠️ Alerta BTC: $${price}`);
                     } else {
@@ -74,11 +77,8 @@
             } catch (e) { console.error("Erro API"); }
         }
 
-        // Inicia o monitoramento
         setInterval(updateHub, 5000);
-
-        // TESTE INICIAL: Envia mensagem assim que abrir para confirmar que o bot está vivo
-        sendTelegram("🛡️ Visual Cripto Hub Online!");
+        sendTelegram("🛡️ Visual Cripto Hub Online com AdSense!");
     </script>
 
     <footer>
