@@ -218,40 +218,38 @@
             document.getElementById('signal-panel').innerHTML = `<div class="text-xs font-bold ${rsi > 50 ? 'text-[#00ff41]' : 'text-[#ff3232]'}">${rsi > 50 ? 'STRONG BUY' : 'NEUTRAL'}</div><div class="text-[9px] text-[#444]">RSI (14): ${rsi}</div>`;
         }
 
-      // --- NEWS RSS (PROVEDOR FEEDNAMI - MAIS ESTÁVEL) ---
-        async function fetchNews() {
-            const newsContainer = document.getElementById('news-container');
-            try {
-                // O Feednami converte o RSS para JSON nativamente e resolve o erro de conexão
-                const url = 'https://br.cointelegraph.com/rss';
-                const endpoint = `https://api.feednami.com/api/v1/public/get?url=${encodeURIComponent(url)}`;
-                
-                const res = await fetch(endpoint);
-                const json = await res.json();
-                
-                if (json.meta.code === 200) {
-                    const entries = json.entries.slice(0, 10);
-                    newsContainer.innerHTML = entries.map(item => `
-                        <div class="mb-2 pb-2 border-b border-[#111] cursor-pointer hover:bg-[#ffffff05] transition-all" 
-                             onclick="window.open('${item.link}', '_blank')">
-                            <div class="text-[10px] text-gray-200 font-bold mb-0.5 leading-tight">${item.title}</div>
-                            <div class="flex justify-between items-center mt-1">
-                                <span class="text-[8px] text-[#00ff41] font-bold uppercase">COINTELEGRAPH</span>
-                                <span class="text-[8px] text-[#333]">${new Date(item.pubDate).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    throw new Error("API Limit");
-                }
-            } catch (e) {
-                console.error("Erro no Feed:", e);
-                newsContainer.innerHTML = '<div class="text-[10px] text-center py-4 text-[#444]">RECONECTANDO AO FEED...</div>';
-                setTimeout(fetchNews, 15000); // Tenta novamente em 15s
-            }
+      // --- NEWS ENGINE DEFINITIVA ---
+async function fetchNews() {
+    const container = document.getElementById('news-container');
+    try {
+        // Usando o serviço RSS2JSON com cache-buster para evitar dados velhos
+        const rssUrl = 'https://br.cointelegraph.com/rss';
+        const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&api_key=00000000000000000000000000000000&count=10`;
+
+        const response = await fetch(proxyUrl);
+        const data = await response.json();
+
+        if (data.status === 'ok') {
+            container.innerHTML = data.items.map(item => `
+                <div class="mb-3 pb-2 border-b border-[#111] hover:bg-[#00ff4105] cursor-pointer transition-all" 
+                     onclick="window.open('${item.link}', '_blank')">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-[9px] font-bold text-[#00ff41] bg-[#00ff4110] px-1">COINTELEGRAPH</span>
+                        <span class="text-[9px] text-[#333]">${new Date(item.pubDate).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                    <div class="text-[11px] leading-tight text-gray-300 font-medium">${item.title}</div>
+                </div>
+            `).join('');
+        } else {
+            throw new Error("Feed Error");
         }
-            }
-        }
+    } catch (error) {
+        console.error("News Link Fail:", error);
+        container.innerHTML = '<div class="text-[10px] text-center py-8 text-[#222] tracking-tighter italic">AGUARDANDO SYNC COM O FEED...</div>';
+        // Tenta reconectar a cada 10 segundos se falhar
+        setTimeout(fetchNews, 10000);
+    }
+}
 
         // --- INICIALIZAÇÃO CORRIGIDA ---
         window.onload = () => {
