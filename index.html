@@ -218,60 +218,49 @@
             document.getElementById('signal-panel').innerHTML = `<div class="text-xs font-bold ${rsi > 50 ? 'text-[#00ff41]' : 'text-[#ff3232]'}">${rsi > 50 ? 'STRONG BUY' : 'NEUTRAL'}</div><div class="text-[9px] text-[#444]">RSI (14): ${rsi}</div>`;
         }
 
-        // --- NEWS RSS (GRATUITO) ---
+       // --- NEWS RSS (SOLUÇÃO DEFINITIVA) ---
         async function fetchNews() {
+            const newsContainer = document.getElementById('news-container');
             try {
-                const proxy = 'https://api.allorigins.win/get?url=';
-                const feed = 'https://br.cointelegraph.com/rss';
-                const res = await fetch(proxy + encodeURIComponent(feed));
-                const data = await res.json();
-                const parser = new DOMParser();
-                const xml = parser.parseFromString(data.contents, "text/xml");
-                const items = Array.from(xml.querySelectorAll("item")).slice(0, 10);
+                // Usando o serviço rss2json (gratuito e estável para leitura de RSS)
+                const feedUrl = 'https://br.cointelegraph.com/rss';
+                const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
                 
-                document.getElementById('news-container').innerHTML = items.map(i => `
-                    <div class="mb-2 pb-2 border-b border-[#111] cursor-pointer hover:bg-[#ffffff05]" onclick="window.open('${i.querySelector("link").textContent}', '_blank')">
-                        <div class="text-[10px] text-gray-200 font-bold mb-0.5">${i.querySelector("title").textContent}</div>
-                        <div class="text-[8px] text-[#444] uppercase">${new Date(i.querySelector("pubDate").textContent).toLocaleTimeString()} - COINTELEGRAPH</div>
-                    </div>
-                `).join('');
-            } catch (e) { document.getElementById('news-container').innerHTML = 'Erro ao carregar feed.'; }
+                const res = await fetch(apiUrl);
+                const data = await res.json();
+                
+                if (data.status === 'ok') {
+                    newsContainer.innerHTML = data.items.map(item => `
+                        <div class="mb-2 pb-2 border-b border-[#111] cursor-pointer hover:bg-[#ffffff05] transition-all" 
+                             onclick="window.open('${item.link}', '_blank')">
+                            <div class="text-[10px] text-gray-200 font-bold mb-0.5 leading-tight">${item.title}</div>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-[8px] text-[#00ff41] font-bold uppercase">COINTELEGRAPH</span>
+                                <span class="text-[8px] text-[#333]">${new Date(item.pubDate).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    throw new Error("Falha no status da API");
+                }
+            } catch (e) {
+                console.error("Erro no Feed:", e);
+                newsContainer.innerHTML = '<div class="text-[10px] text-center py-4 text-[#444]">CONEXÃO NEWS OFFLINE - TENTANDO RECONECTAR...</div>';
+                // Tenta novamente em 10 segundos se falhar
+                setTimeout(fetchNews, 10000);
+            }
         }
 
-        // --- TICKER BAR (MERCADO REAL) ---
-        async function initTicker() {
-            const coins = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA'];
-            const res = await fetch('https://api.binance.com/api/v3/ticker/24h');
-            const data = await res.json();
-            const filtered = data.filter(d => coins.includes(d.symbol.replace('USDT', '')) && d.symbol.endsWith('USDT'));
-            
-            const html = [...filtered, ...filtered].map(d => `
-                <div class="inline-flex items-center gap-2 px-6">
-                    <span class="text-[#555] text-[10px]">${d.symbol.replace('USDT', '')}</span>
-                    <span class="text-[#888] text-[10px] font-bold">$${parseFloat(d.lastPrice).toFixed(d.lastPrice < 1 ? 4 : 2)}</span>
-                    <span class="${d.priceChangePercent >= 0 ? 'text-[#00ff41]' : 'text-[#ff3232]'} text-[9px]">${parseFloat(d.priceChangePercent).toFixed(2)}%</span>
-                </div>
-            `).join('');
-            document.getElementById('ticker-bar').innerHTML = html;
-        }
-
-        // --- EVENTOS ---
-        document.querySelectorAll('.tf-btn').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentTimeframe = btn.textContent;
-                fetchCandles(timeframeMap[currentTimeframe]);
-                initWS();
-            };
-        });
-
-        // INIT
-        fetchCandles();
-        initWS();
-        fetchNews();
-        initTicker();
-        setInterval(fetchNews, 300000); // 5 min
+        // --- INICIALIZAÇÃO CORRIGIDA ---
+        window.onload = () => {
+            fetchCandles();
+            initWS();
+            fetchNews();
+            initTicker();
+            // Atualizações automáticas
+            setInterval(fetchNews, 300000); // 5 min
+            setInterval(initTicker, 60000); // 1 min
+        };
     </script>
 </body>
 </html>
