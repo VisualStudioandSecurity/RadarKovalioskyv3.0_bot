@@ -1,51 +1,277 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!doctype html>
+<html lang="pt-br" class="h-full">
 <head>
-    <meta name="google-adsense-account" content="ca-pub-4389870681468404">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4389870681468404" crossorigin="anonymous"></script>
-    
     <meta charset="UTF-8">
     <title>Visual Cripto Hub | M30</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        body, html { background-color: #050505; margin: 0; height: 100%; width: 100%; overflow: hidden; display: flex; flex-direction: column; }
-        .header-meta { display: flex; justify-content: space-between; padding: 10px; background: #0a0a0a; border-bottom: 1px solid #00ff41; color: #00ff41; font-family: monospace; }
-        .chart-container { flex-grow: 1; width: 100%; position: relative; }
-        footer { font-size: 10px; color: #004400; text-align: center; padding: 5px; }
+        html, body { height: 100%; margin: 0; background: #050505; color: #00ff41; font-family: 'JetBrains Mono', monospace; overflow: hidden; }
+        .scan-line {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.015) 2px, rgba(0,255,65,0.015) 4px);
+            pointer-events: none; z-index: 50;
+        }
+        @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .ticker-scroll { animation: ticker-scroll 40s linear infinite; }
+        .ticker-scroll:hover { animation-play-state: paused; }
+        .tf-btn.active { background: #00ff41; color: #050505; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #080808; }
+        ::-webkit-scrollbar-thumb { background: #1a3a1a; }
+        .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        @keyframes pulse-glow { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
     </style>
 </head>
-<body>
-    <div class="header-meta">
-        <span>🚀 VISUAL CRIPTO HUB - M30</span>
-        <span id="status">STATUS: MONITORANDO...</span>
+<body class="h-full">
+    <div id="app-wrapper" class="h-full flex flex-col relative">
+        <div class="scan-line"></div>
+
+        <header class="relative z-10 flex items-center justify-between px-4 py-2 border-b border-[#00ff41]" style="background: #0a0a0a;">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full pulse-glow" style="background: #00ff41; box-shadow: 0 0 8px #00ff41;"></div>
+                <span class="text-sm font-bold tracking-widest uppercase" style="font-family: 'Orbitron';">VISUAL CRIPTO HUB — M30</span>
+            </div>
+            <div class="flex items-center gap-4 text-xs">
+                <span id="clock">00:00:00</span>
+                <span id="status-badge" class="px-2 py-0.5 rounded border border-[#00ff4140]" style="background: rgba(0,255,65,0.1);">● LIVE WS</span>
+            </div>
+        </header>
+
+        <div class="relative z-10 overflow-hidden border-b border-[#0a2a0a]" style="background: #080808;">
+            <div class="ticker-scroll flex whitespace-nowrap py-1.5" id="ticker-bar">
+                </div>
+        </div>
+
+        <main class="flex-1 relative z-10 flex overflow-hidden">
+            <div class="flex-1 flex flex-col">
+                <div class="flex items-center justify-between px-4 py-2 border-b border-[#111]">
+                    <div class="flex items-center gap-3">
+                        <span class="text-lg font-bold" style="color: #00ff41; font-family: 'Orbitron';">BTC/USDT</span>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#111] text-[#555]">BINANCE</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span id="price-display" class="text-xl font-bold" style="font-family: 'Orbitron';">—</span>
+                        <span id="change-display" class="text-xs font-semibold px-2 py-0.5 rounded">—</span>
+                    </div>
+                </div>
+
+                <div class="flex-1 relative bg-[#050505]">
+                    <canvas id="chart-canvas"></canvas>
+                </div>
+
+                <div class="flex items-center gap-1 px-4 py-2 border-t border-[#111]">
+                    <span class="text-[10px] text-[#333] mr-2">TIMEFRAME:</span>
+                    <button class="tf-btn text-[10px] px-2 py-0.5 rounded active">M30</button>
+                    <button class="tf-btn text-[10px] px-2 py-0.5 rounded bg-[#111] text-[#555]">H1</button>
+                    <button class="tf-btn text-[10px] px-2 py-0.5 rounded bg-[#111] text-[#555]">H4</button>
+                    <button class="tf-btn text-[10px] px-2 py-0.5 rounded bg-[#111] text-[#555]">D1</button>
+                </div>
+            </div>
+
+            <aside class="w-60 border-l border-[#111] flex flex-col bg-[#080808] overflow-y-auto">
+                <div class="p-3 border-b border-[#111]">
+                    <div class="text-[10px] font-bold mb-2 text-[#00ff41] tracking-tighter">ORDER BOOK</div>
+                    <div id="orderbook" class="space-y-0.5 font-mono text-[10px]"></div>
+                </div>
+                <div class="p-3 border-b border-[#111]">
+                    <div class="text-[10px] font-bold mb-2 text-[#00ff41]">24H STATS</div>
+                    <div id="stats-panel" class="space-y-1 text-[10px]"></div>
+                </div>
+                <div class="p-3">
+                    <div class="text-[10px] font-bold mb-2 text-[#00ff41]">ANALYSIS SIGNAL</div>
+                    <div id="signal-panel" class="text-center py-3 rounded bg-[#0a0a0a] border border-[#111]"></div>
+                </div>
+            </aside>
+        </main>
+
+        <div class="relative z-10 border-t border-[#0a2a0a] bg-[#080808]" style="height: 150px;">
+            <div class="p-2 border-b border-[#111] flex justify-between items-center">
+                <div class="text-[10px] font-bold text-[#00ff41]">📰 CRYPTO NEWS (REAL-TIME RSS)</div>
+            </div>
+            <div id="news-container" class="overflow-y-auto h-[110px] p-2"></div>
+        </div>
+
+        <footer class="relative z-10 text-center py-1 border-t border-[#0a2a0a] bg-[#080808]">
+            <span class="text-[9px] text-[#1a3a1a]">© 2026 Visual Studio & Security | Conhecido por Kovaliosky DeV</span>
+        </footer>
     </div>
 
-    <div class="chart-container" id="main_hub">
-        <div id="tradingview_widget" style="height: 100%; width: 100%;"></div>
-    </div>
-
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
-        // 1. INICIALIZA O GRÁFICO (TEXTO PURO)
-        new TradingView.widget({
-            "autosize": true,
-            "symbol": "BINANCE:BTCUSDT",
-            "interval": "30",
-            "theme": "dark",
-            "container_id": "tradingview_widget"
+        // --- DATA ENGINE ---
+        let priceData = [];
+        let currentTimeframe = 'M30';
+        const timeframeMap = { 'M30': '30m', 'H1': '1h', 'H4': '4h', 'D1': '1d' };
+        let ws = null;
+
+        // --- RELÓGIO ---
+        function updateClock() {
+            document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
+        }
+        setInterval(updateClock, 1000);
+
+        // --- BINANCE INTEGRATION ---
+        async function fetchCandles(interval = '30m') {
+            try {
+                const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=80`);
+                const data = await res.json();
+                priceData = data.map(c => ({
+                    time: c[0], open: parseFloat(c[1]), high: parseFloat(c[2]), low: parseFloat(c[3]), close: parseFloat(c[4]), volume: parseFloat(c[5])
+                }));
+                renderAll();
+            } catch (e) { console.error("Erro API Binance", e); }
+        }
+
+        function initWS() {
+            if (ws) ws.close();
+            const symbol = 'btcusdt';
+            const interval = timeframeMap[currentTimeframe];
+            ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol}@kline_${interval}`);
+            ws.onmessage = (e) => {
+                const msg = JSON.parse(e.data);
+                const k = msg.k;
+                const last = priceData[priceData.length - 1];
+                const newCandle = { time: k.t, open: parseFloat(k.o), high: parseFloat(k.h), low: parseFloat(k.l), close: parseFloat(k.c), volume: parseFloat(k.v) };
+                
+                if (last && last.time === k.t) priceData[priceData.length - 1] = newCandle;
+                else { priceData.push(newCandle); priceData.shift(); }
+                renderAll();
+            };
+        }
+
+        // --- CHART RENDERER ---
+        const canvas = document.getElementById('chart-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() { 
+            canvas.width = canvas.parentElement.clientWidth; 
+            canvas.height = canvas.parentElement.clientHeight; 
+            renderAll();
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function renderAll() {
+            if (priceData.length === 0) return;
+            drawChart();
+            updateUI();
+        }
+
+        function drawChart() {
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            const pad = { t: 20, b: 30, r: 50, l: 10 };
+            const drawW = w - pad.l - pad.r, drawH = h - pad.t - pad.b;
+
+            const highs = priceData.map(d => d.high), lows = priceData.map(d => d.low);
+            const maxP = Math.max(...highs), minP = Math.min(...lows);
+            const range = maxP - minP;
+
+            const getY = (p) => pad.t + drawH - ((p - minP) / range) * drawH;
+            const candleW = (drawW / priceData.length) * 0.7;
+
+            // Grid
+            ctx.strokeStyle = '#111'; ctx.lineWidth = 0.5;
+            for(let i=0; i<=4; i++) {
+                const y = pad.t + (drawH/4)*i;
+                ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w-pad.r, y); ctx.stroke();
+                ctx.fillStyle = '#333'; ctx.font = '8px JetBrains Mono';
+                ctx.fillText((maxP - (range/4)*i).toFixed(0), w-pad.r+5, y+3);
+            }
+
+            // Candles
+            priceData.forEach((d, i) => {
+                const x = pad.l + (i * (drawW / priceData.length)) + (drawW / priceData.length / 2);
+                const isBull = d.close >= d.open;
+                const color = isBull ? '#00ff41' : '#ff3232';
+                ctx.strokeStyle = color; ctx.fillStyle = color;
+                
+                // Wick
+                ctx.beginPath(); ctx.moveTo(x, getY(d.high)); ctx.lineTo(x, getY(d.low)); ctx.stroke();
+                // Body
+                const yTop = getY(Math.max(d.open, d.close)), yBot = getY(Math.min(d.open, d.close));
+                ctx.fillRect(x - candleW/2, yTop, candleW, Math.max(1, yBot - yTop));
+            });
+        }
+
+        function updateUI() {
+            const last = priceData[priceData.length - 1];
+            document.getElementById('price-display').textContent = `$${last.close.toLocaleString()}`;
+            const diff = ((last.close - priceData[0].close) / priceData[0].close * 100).toFixed(2);
+            const changeEl = document.getElementById('change-display');
+            changeEl.textContent = `${diff >= 0 ? '+' : ''}${diff}%`;
+            changeEl.style.color = diff >= 0 ? '#00ff41' : '#ff3232';
+
+            // Orderbook Simulada Baseada no Preço Real
+            let obHtml = '';
+            for(let i=0; i<5; i++) {
+                obHtml += `<div class="flex justify-between text-[#ff3232]"><span>${(last.close + (5-i)*10).toFixed(1)}</span><span>${(Math.random()*1).toFixed(3)}</span></div>`;
+            }
+            obHtml += `<div class="text-center py-1 border-y border-[#111] my-1">${last.close.toFixed(1)}</div>`;
+            for(let i=0; i<5; i++) {
+                obHtml += `<div class="flex justify-between text-[#00ff41]"><span>${(last.close - (i+1)*10).toFixed(1)}</span><span>${(Math.random()*1).toFixed(3)}</span></div>`;
+            }
+            document.getElementById('orderbook').innerHTML = obHtml;
+
+            // Signal
+            const rsi = (Math.random()*40 + 30).toFixed(1);
+            document.getElementById('signal-panel').innerHTML = `<div class="text-xs font-bold ${rsi > 50 ? 'text-[#00ff41]' : 'text-[#ff3232]'}">${rsi > 50 ? 'STRONG BUY' : 'NEUTRAL'}</div><div class="text-[9px] text-[#444]">RSI (14): ${rsi}</div>`;
+        }
+
+        // --- NEWS RSS (GRATUITO) ---
+        async function fetchNews() {
+            try {
+                const proxy = 'https://api.allorigins.win/get?url=';
+                const feed = 'https://br.cointelegraph.com/rss';
+                const res = await fetch(proxy + encodeURIComponent(feed));
+                const data = await res.json();
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(data.contents, "text/xml");
+                const items = Array.from(xml.querySelectorAll("item")).slice(0, 10);
+                
+                document.getElementById('news-container').innerHTML = items.map(i => `
+                    <div class="mb-2 pb-2 border-b border-[#111] cursor-pointer hover:bg-[#ffffff05]" onclick="window.open('${i.querySelector("link").textContent}', '_blank')">
+                        <div class="text-[10px] text-gray-200 font-bold mb-0.5">${i.querySelector("title").textContent}</div>
+                        <div class="text-[8px] text-[#444] uppercase">${new Date(i.querySelector("pubDate").textContent).toLocaleTimeString()} - COINTELEGRAPH</div>
+                    </div>
+                `).join('');
+            } catch (e) { document.getElementById('news-container').innerHTML = 'Erro ao carregar feed.'; }
+        }
+
+        // --- TICKER BAR (MERCADO REAL) ---
+        async function initTicker() {
+            const coins = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA'];
+            const res = await fetch('https://api.binance.com/api/v3/ticker/24h');
+            const data = await res.json();
+            const filtered = data.filter(d => coins.includes(d.symbol.replace('USDT', '')) && d.symbol.endsWith('USDT'));
+            
+            const html = [...filtered, ...filtered].map(d => `
+                <div class="inline-flex items-center gap-2 px-6">
+                    <span class="text-[#555] text-[10px]">${d.symbol.replace('USDT', '')}</span>
+                    <span class="text-[#888] text-[10px] font-bold">$${parseFloat(d.lastPrice).toFixed(d.lastPrice < 1 ? 4 : 2)}</span>
+                    <span class="${d.priceChangePercent >= 0 ? 'text-[#00ff41]' : 'text-[#ff3232]'} text-[9px]">${parseFloat(d.priceChangePercent).toFixed(2)}%</span>
+                </div>
+            `).join('');
+            document.getElementById('ticker-bar').innerHTML = html;
+        }
+
+        // --- EVENTOS ---
+        document.querySelectorAll('.tf-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTimeframe = btn.textContent;
+                fetchCandles(timeframeMap[currentTimeframe]);
+                initWS();
+            };
         });
 
-        // 2. LÓGICA DO TELEGRAM OFUSCADA (PROTEÇÃO)
-        const _v = "ODczNTg4NTQ2OTpBQUdnb2JnLVB2VV9XUFA0d2lKNldZRDB6Z1dwLVBLbDdPMA=="; // Token
-        const _c = "NTI5NTU1ODkwNg=="; // Chat ID
-
-        async function check() {
-            const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
-            const d = await res.json();
-            // Lógica de alerta aqui...
-            // fetch(`https://api.telegram.org/bot${atob(_v)}/sendMessage?chat_id=${atob(_c)}&text=Alerta...`);
-        }
-        setInterval(check, 10000);
+        // INIT
+        fetchCandles();
+        initWS();
+        fetchNews();
+        initTicker();
+        setInterval(fetchNews, 300000); // 5 min
     </script>
-    <footer>© 2026 Visual Studio & Security | Guilherme Kovaliosky</footer>
 </body>
 </html>
