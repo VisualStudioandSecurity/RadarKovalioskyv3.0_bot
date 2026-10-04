@@ -69,14 +69,14 @@
             </div>
 
             <aside class="w-72 border-l border-[#111] flex flex-col bg-[#080808] overflow-y-auto">
-                <!-- ORDER BOOK (100% REAL VIA BINANCE WS) -->
+                <!-- ORDER BOOK (REAL-TIME BINANCE WS) -->
                 <div class="p-3 border-b border-[#111]">
                     <div class="flex justify-between items-center mb-2">
                         <div class="text-[10px] font-bold text-[#00ff41]">ORDER BOOK (REAL-TIME)</div>
                         <span class="text-[8px] text-[#00ff4188]">● BINANCE WS</span>
                     </div>
                     <div id="orderbook" class="space-y-0.5 font-mono text-[10px]">
-                        <div class="text-[9px] text-[#555] text-center py-2">A Conectar ao Livro...</div>
+                        <div class="text-[9px] text-[#555] text-center py-2">Conectando ao Livro...</div>
                     </div>
                 </div>
 
@@ -90,13 +90,11 @@
                 <div class="p-3">
                     <div class="text-[10px] font-bold mb-2 text-[#00ff41]">CALCULADORA DE SL / TP</div>
                     <div class="p-3 rounded bg-[#0a0a0a] border border-[#111] space-y-2.5">
-                        <!-- TIPO DE POSIÇÃO -->
                         <div class="flex gap-1">
                             <button id="btn-long" onclick="setPosType('LONG')" class="pos-btn active-long flex-1 text-[9px] py-1 rounded border border-[#00ff41]">LONG</button>
                             <button id="btn-short" onclick="setPosType('SHORT')" class="pos-btn flex-1 text-[9px] py-1 rounded border border-[#333] text-[#555]">SHORT</button>
                         </div>
 
-                        <!-- PREÇO DE ENTRADA -->
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label class="text-[8px] text-[#777]">ENTRADA ($)</label>
@@ -105,13 +103,11 @@
                             <input type="number" id="calc-entry" step="0.1" class="w-full bg-[#050505] border border-[#222] text-[#00ff41] text-[10px] px-2 py-1 rounded focus:outline-none focus:border-[#00ff41]" oninput="calculateRiskReward()">
                         </div>
 
-                        <!-- CAPITAL INVESTIDO -->
                         <div>
                             <label class="text-[8px] text-[#777] block mb-1">CAPITAL ($)</label>
-                            <input type="number" id="calc-[#calc-capital]" value="1000" id="calc-capital" step="10" class="w-full bg-[#050505] border border-[#222] text-white text-[10px] px-2 py-1 rounded focus:outline-none focus:border-[#00ff41]" oninput="calculateRiskReward()">
+                            <input type="number" id="calc-capital" value="1000" step="10" class="w-full bg-[#050505] border border-[#222] text-white text-[10px] px-2 py-1 rounded focus:outline-none focus:border-[#00ff41]" oninput="calculateRiskReward()">
                         </div>
 
-                        <!-- STOP LOSS (%) E TAKE PROFIT (%) -->
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <label class="text-[8px] text-[#ff3232] block mb-1">STOP LOSS (%)</label>
@@ -123,7 +119,6 @@
                             </div>
                         </div>
 
-                        <!-- RESULTADOS -->
                         <div class="pt-2 border-t border-[#111] space-y-1.5 text-[9px]">
                             <div class="flex justify-between">
                                 <span class="text-[#777]">PREÇO STOP:</span>
@@ -166,7 +161,6 @@
     </div>
 
     <script>
-        // --- CONFIG & STATE ---
         let priceData = [];
         let currentTimeframe = 'M30';
         const timeframeMap = { 'M30': '30m', 'H1': '1h', 'H4': '4h', 'D1': '1d' };
@@ -176,12 +170,10 @@
         const canvas = document.getElementById('chart-canvas');
         const ctx = canvas.getContext('2d');
 
-        // --- RELÓGIO ---
         function updateClock() {
             document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
         }
 
-        // --- BINANCE DATA (KLINE & WEBSOCKET) ---
         async function fetchCandles(interval = '30m') {
             try {
                 const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=80`);
@@ -195,13 +187,12 @@
                     volume: parseFloat(c[5])
                 }));
                 
-                // Preenche o campo da calculadora com o preço de fecho atual se estiver vazio
                 const entryInput = document.getElementById('calc-entry');
-                if (!entryInput.value && priceData.length > 0) {
+                if (entryInput && !entryInput.value && priceData.length > 0) {
                     entryInput.value = priceData[priceData.length - 1].close.toFixed(1);
-                    calculateRiskReward();
                 }
-
+                
+                calculateRiskReward();
                 renderAll();
             } catch (e) { console.error("API Error", e); }
         }
@@ -234,7 +225,6 @@
             document.getElementById('status-badge').textContent = `● LIVE ${currentTimeframe}`;
         }
 
-        // --- BINANCE ORDER BOOK 100% REAL (DEPTH WEBSOCKET) ---
         function initDepthWS() {
             if (depthWs) depthWs.close();
             depthWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@depth10@1000ms');
@@ -251,9 +241,7 @@
             const container = document.getElementById('orderbook');
             if (!container) return;
 
-            // Asks (Vendas): pega os 5 primeiros e inverte para o preço mais alto ficar no topo
             const topAsks = asks.slice(0, 5).reverse();
-            // Bids (Compras): pega os 5 primeiros
             const topBids = bids.slice(0, 5);
 
             let html = `
@@ -290,7 +278,6 @@
             container.innerHTML = html;
         }
 
-        // --- ALGORITMO DE SUPORTE & VOLUME ---
         function calculateSupportVolume() {
             if (!priceData || priceData.length < 5) return null;
 
@@ -306,7 +293,6 @@
 
             let buyVol = 0;
             let sellVol = 0;
-            const candlesAnalyzed = priceData.length - minIndex;
 
             for (let i = minIndex; i < priceData.length; i++) {
                 const c = priceData[i];
@@ -337,10 +323,9 @@
                 statusColor = "#ffaa00";
             }
 
-            return { minLow, minIndex, buyPct, sellPct, buyVol, sellVol, candlesAnalyzed, statement, statusColor };
+            return { minLow, minIndex, buyPct, sellPct, buyVol, sellVol, candlesAnalyzed: priceData.length - minIndex, statement, statusColor };
         }
 
-        // --- RENDERIZADOR DO GRÁFICO ---
         function renderAll() {
             if (priceData.length === 0) return;
             const w = canvas.width = canvas.parentElement.clientWidth;
@@ -355,7 +340,6 @@
 
             const volAnalysis = calculateSupportVolume();
 
-            // Linha de Suporte
             if (volAnalysis) {
                 const supY = getY(volAnalysis.minLow);
                 ctx.save();
@@ -373,7 +357,6 @@
                 ctx.restore();
             }
 
-            // Velas
             const candleW = (drawW / priceData.length) * 0.8;
             priceData.forEach((d, i) => {
                 const x = pad.l + (i * (drawW / priceData.length)) + (drawW / priceData.length / 2);
@@ -386,7 +369,6 @@
                 ctx.fillRect(x - candleW/2, Math.min(y1, y2), candleW, Math.max(1, Math.abs(y1 - y2)));
             });
 
-            // Atualização de Preço Topo
             const last = priceData[priceData.length - 1];
             document.getElementById('price-display').textContent = `$${last.close.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             const change = ((last.close - priceData[0].close) / priceData[0].close * 100).toFixed(2);
@@ -427,7 +409,6 @@
             }
         }
 
-        // --- CALCULADORA DE STOP LOSS & TAKE PROFIT ---
         function setPosType(type) {
             posType = type;
             const btnLong = document.getElementById('btn-long');
@@ -452,10 +433,17 @@
         }
 
         function calculateRiskReward() {
-            const entry = parseFloat(document.getElementById('calc-entry').value);
-            const capital = parseFloat(document.getElementById('calc-capital').value) || 0;
-            const slPct = parseFloat(document.getElementById('calc-sl-pct').value) || 0;
-            const tpPct = parseFloat(document.getElementById('calc-tp-pct').value) || 0;
+            const entryInput = document.getElementById('calc-entry');
+            const capitalInput = document.getElementById('calc-capital');
+            const slPctInput = document.getElementById('calc-sl-pct');
+            const tpPctInput = document.getElementById('calc-tp-pct');
+
+            if (!entryInput || !capitalInput || !slPctInput || !tpPctInput) return;
+
+            const entry = parseFloat(entryInput.value);
+            const capital = parseFloat(capitalInput.value) || 0;
+            const slPct = parseFloat(slPctInput.value) || 0;
+            const tpPct = parseFloat(tpPctInput.value) || 0;
 
             if (!entry || entry <= 0) {
                 document.getElementById('res-sl-price').textContent = "—";
@@ -471,7 +459,7 @@
             if (posType === 'LONG') {
                 slPrice = entry * (1 - (slPct / 100));
                 tpPrice = entry * (1 + (tpPct / 100));
-            } else { // SHORT
+            } else {
                 slPrice = entry * (1 + (slPct / 100));
                 tpPrice = entry * (1 - (tpPct / 100));
             }
@@ -487,7 +475,6 @@
             document.getElementById('res-rr').textContent = `1 : ${rrRatio}`;
         }
 
-        // --- NOTÍCIAS (COINTELEGRAPH BR) ---
         async function fetchNews() {
             const container = document.getElementById('news-container');
             try {
@@ -507,7 +494,6 @@
             } catch (e) { console.error("News Error"); }
         }
 
-        // --- TICKER ---
         async function initTicker() {
             try {
                 const res = await fetch('https://api.binance.com/api/v3/ticker/24h');
@@ -524,7 +510,6 @@
             } catch (e) {}
         }
 
-        // --- SELEÇÃO DE TIMEFRAME ---
         document.querySelectorAll('.tf-btn').forEach(btn => {
             btn.onclick = async () => {
                 document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
@@ -537,7 +522,6 @@
             };
         });
 
-        // --- BOOT SYSTEM ---
         window.onload = () => {
             setInterval(updateClock, 1000);
             fetchCandles('30m');
