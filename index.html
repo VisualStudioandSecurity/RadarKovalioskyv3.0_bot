@@ -15,6 +15,8 @@
         @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .ticker-scroll { animation: ticker-scroll 40s linear infinite; }
         .tf-btn.active { background: #00ff41 !important; color: #050505 !important; font-weight: bold; }
+        .pos-btn.active-long { background: #00ff41 !important; color: #050505 !important; font-weight: bold; }
+        .pos-btn.active-short { background: #ff3232 !important; color: #ffffff !important; font-weight: bold; }
         .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
         @keyframes pulse-glow { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
         ::-webkit-scrollbar { width: 4px; }
@@ -66,14 +68,85 @@
                 </div>
             </div>
 
-            <aside class="w-64 border-l border-[#111] flex flex-col bg-[#080808] overflow-y-auto">
+            <aside class="w-72 border-l border-[#111] flex flex-col bg-[#080808] overflow-y-auto">
+                <!-- ORDER BOOK (100% REAL VIA BINANCE WS) -->
                 <div class="p-3 border-b border-[#111]">
-                    <div class="text-[10px] font-bold mb-2 text-[#00ff41]">ORDER BOOK</div>
-                    <div id="orderbook" class="space-y-0.5 font-mono text-[10px]"></div>
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-[10px] font-bold text-[#00ff41]">ORDER BOOK (REAL-TIME)</div>
+                        <span class="text-[8px] text-[#00ff4188]">● BINANCE WS</span>
+                    </div>
+                    <div id="orderbook" class="space-y-0.5 font-mono text-[10px]">
+                        <div class="text-[9px] text-[#555] text-center py-2">A Conectar ao Livro...</div>
+                    </div>
                 </div>
-                <div class="p-3">
+
+                <!-- ANÁLISE DE SUPORTE & FLUXO -->
+                <div class="p-3 border-b border-[#111]">
                     <div class="text-[10px] font-bold mb-2 text-[#00ff41]">ANÁLISE DE SUPORTE & FLUXO</div>
                     <div id="signal-panel" class="p-3 rounded bg-[#0a0a0a] border border-[#111]"></div>
+                </div>
+
+                <!-- CALCULADORA DE STOP LOSS & TAKE PROFIT -->
+                <div class="p-3">
+                    <div class="text-[10px] font-bold mb-2 text-[#00ff41]">CALCULADORA DE SL / TP</div>
+                    <div class="p-3 rounded bg-[#0a0a0a] border border-[#111] space-y-2.5">
+                        <!-- TIPO DE POSIÇÃO -->
+                        <div class="flex gap-1">
+                            <button id="btn-long" onclick="setPosType('LONG')" class="pos-btn active-long flex-1 text-[9px] py-1 rounded border border-[#00ff41]">LONG</button>
+                            <button id="btn-short" onclick="setPosType('SHORT')" class="pos-btn flex-1 text-[9px] py-1 rounded border border-[#333] text-[#555]">SHORT</button>
+                        </div>
+
+                        <!-- PREÇO DE ENTRADA -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[8px] text-[#777]">ENTRADA ($)</label>
+                                <button onclick="useCurrentPrice()" class="text-[8px] text-[#00ff41] hover:underline">[ATUAL]</button>
+                            </div>
+                            <input type="number" id="calc-entry" step="0.1" class="w-full bg-[#050505] border border-[#222] text-[#00ff41] text-[10px] px-2 py-1 rounded focus:outline-none focus:border-[#00ff41]" oninput="calculateRiskReward()">
+                        </div>
+
+                        <!-- CAPITAL INVESTIDO -->
+                        <div>
+                            <label class="text-[8px] text-[#777] block mb-1">CAPITAL ($)</label>
+                            <input type="number" id="calc-[#calc-capital]" value="1000" id="calc-capital" step="10" class="w-full bg-[#050505] border border-[#222] text-white text-[10px] px-2 py-1 rounded focus:outline-none focus:border-[#00ff41]" oninput="calculateRiskReward()">
+                        </div>
+
+                        <!-- STOP LOSS (%) E TAKE PROFIT (%) -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[8px] text-[#ff3232] block mb-1">STOP LOSS (%)</label>
+                                <input type="number" id="calc-sl-pct" value="1.5" step="0.1" class="w-full bg-[#050505] border border-[#ff323240] text-[#ff3232] text-[10px] px-2 py-1 rounded focus:outline-none focus:border-[#ff3232]" oninput="calculateRiskReward()">
+                            </div>
+                            <div>
+                                <label class="text-[8px] text-[#00ff41] block mb-1">TAKE PROFIT (%)</label>
+                                <input type="number" id="calc-tp-pct" value="3.0" step="0.1" class="w-full bg-[#050505] border border-[#00ff4140] text-[#00ff41] text-[10px] px-2 py-1 rounded focus:outline-none focus:border-[#00ff41]" oninput="calculateRiskReward()">
+                            </div>
+                        </div>
+
+                        <!-- RESULTADOS -->
+                        <div class="pt-2 border-t border-[#111] space-y-1.5 text-[9px]">
+                            <div class="flex justify-between">
+                                <span class="text-[#777]">PREÇO STOP:</span>
+                                <span id="res-sl-price" class="text-[#ff3232] font-bold">—</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-[#777]">PERDA ESTIMADA:</span>
+                                <span id="res-sl-val" class="text-[#ff3232]">—</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-[#777]">PREÇO TARGET:</span>
+                                <span id="res-tp-price" class="text-[#00ff41] font-bold">—</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-[#777]">LUCRO ESTIMADO:</span>
+                                <span id="res-tp-val" class="text-[#00ff41]">—</span>
+                            </div>
+                            <div class="flex justify-between pt-1 border-t border-[#111]">
+                                <span class="text-[#777]">RISCO : RETORNO:</span>
+                                <span id="res-rr" class="text-white font-bold">—</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </aside>
         </main>
@@ -93,11 +166,13 @@
     </div>
 
     <script>
-        // --- CONFIG ---
+        // --- CONFIG & STATE ---
         let priceData = [];
         let currentTimeframe = 'M30';
         const timeframeMap = { 'M30': '30m', 'H1': '1h', 'H4': '4h', 'D1': '1d' };
-        let ws = null;
+        let klineWs = null;
+        let depthWs = null;
+        let posType = 'LONG';
         const canvas = document.getElementById('chart-canvas');
         const ctx = canvas.getContext('2d');
 
@@ -106,7 +181,7 @@
             document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
         }
 
-        // --- BINANCE DATA ---
+        // --- BINANCE DATA (KLINE & WEBSOCKET) ---
         async function fetchCandles(interval = '30m') {
             try {
                 const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=80`);
@@ -119,16 +194,24 @@
                     close: parseFloat(c[4]),
                     volume: parseFloat(c[5])
                 }));
+                
+                // Preenche o campo da calculadora com o preço de fecho atual se estiver vazio
+                const entryInput = document.getElementById('calc-entry');
+                if (!entryInput.value && priceData.length > 0) {
+                    entryInput.value = priceData[priceData.length - 1].close.toFixed(1);
+                    calculateRiskReward();
+                }
+
                 renderAll();
             } catch (e) { console.error("API Error", e); }
         }
 
-        function initWS() {
-            if (ws) ws.close();
+        function initKlineWS() {
+            if (klineWs) klineWs.close();
             const interval = timeframeMap[currentTimeframe];
-            ws = new WebSocket(`wss://stream.binance.com:9443/ws/btcusdt@kline_${interval}`);
+            klineWs = new WebSocket(`wss://stream.binance.com:9443/ws/btcusdt@kline_${interval}`);
             
-            ws.onmessage = (e) => {
+            klineWs.onmessage = (e) => {
                 const msg = JSON.parse(e.data);
                 const k = msg.k;
                 const newCandle = { 
@@ -151,11 +234,66 @@
             document.getElementById('status-badge').textContent = `● LIVE ${currentTimeframe}`;
         }
 
-        // --- ALGORITMO: CÁLCULO DE VOLUME DO SUPORTE AO MOMENTO ATUAL ---
+        // --- BINANCE ORDER BOOK 100% REAL (DEPTH WEBSOCKET) ---
+        function initDepthWS() {
+            if (depthWs) depthWs.close();
+            depthWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@depth10@1000ms');
+
+            depthWs.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (data.bids && data.asks) {
+                    renderRealOrderBook(data.bids, data.asks);
+                }
+            };
+        }
+
+        function renderRealOrderBook(bids, asks) {
+            const container = document.getElementById('orderbook');
+            if (!container) return;
+
+            // Asks (Vendas): pega os 5 primeiros e inverte para o preço mais alto ficar no topo
+            const topAsks = asks.slice(0, 5).reverse();
+            // Bids (Compras): pega os 5 primeiros
+            const topBids = bids.slice(0, 5);
+
+            let html = `
+                <div class="flex justify-between text-[8px] text-[#555] mb-1 px-1">
+                    <span>PREÇO (USDT)</span>
+                    <span>QTD (BTC)</span>
+                </div>
+            `;
+
+            topAsks.forEach(ask => {
+                const p = parseFloat(ask[0]).toFixed(1);
+                const q = parseFloat(ask[1]).toFixed(3);
+                html += `
+                    <div class="flex justify-between text-[#ff3232] hover:bg-[#ff323210] px-1 py-0.5 rounded transition-colors">
+                        <span>${p}</span>
+                        <span>${q}</span>
+                    </div>
+                `;
+            });
+
+            html += `<div class="my-1 border-b border-[#222]"></div>`;
+
+            topBids.forEach(bid => {
+                const p = parseFloat(bid[0]).toFixed(1);
+                const q = parseFloat(bid[1]).toFixed(3);
+                html += `
+                    <div class="flex justify-between text-[#00ff41] hover:bg-[#00ff4110] px-1 py-0.5 rounded transition-colors">
+                        <span>${p}</span>
+                        <span>${q}</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // --- ALGORITMO DE SUPORTE & VOLUME ---
         function calculateSupportVolume() {
             if (!priceData || priceData.length < 5) return null;
 
-            // 1. Encontrar o suporte (fundo mais baixo da janela atual)
             let minLow = Infinity;
             let minIndex = 0;
 
@@ -166,7 +304,6 @@
                 }
             });
 
-            // 2. Acumular o volume do suporte até o candle atual
             let buyVol = 0;
             let sellVol = 0;
             const candlesAnalyzed = priceData.length - minIndex;
@@ -186,7 +323,6 @@
             const buyPct = Math.round((buyVol / totalVol) * 100);
             const sellPct = 100 - buyPct;
 
-            // 3. Gerar Afirmação Automatizada
             let statement = "";
             let statusColor = "#00ff41";
 
@@ -204,7 +340,7 @@
             return { minLow, minIndex, buyPct, sellPct, buyVol, sellVol, candlesAnalyzed, statement, statusColor };
         }
 
-        // --- CHART RENDERER ---
+        // --- RENDERIZADOR DO GRÁFICO ---
         function renderAll() {
             if (priceData.length === 0) return;
             const w = canvas.width = canvas.parentElement.clientWidth;
@@ -217,10 +353,9 @@
             const range = maxP - minP;
             const getY = (p) => pad.t + drawH - ((p - minP) / range) * drawH;
 
-            // Análise de Suporte
             const volAnalysis = calculateSupportVolume();
 
-            // Desenhando a linha de suporte no Canvas
+            // Linha de Suporte
             if (volAnalysis) {
                 const supY = getY(volAnalysis.minLow);
                 ctx.save();
@@ -238,41 +373,30 @@
                 ctx.restore();
             }
 
-            // Candles
+            // Velas
             const candleW = (drawW / priceData.length) * 0.8;
             priceData.forEach((d, i) => {
                 const x = pad.l + (i * (drawW / priceData.length)) + (drawW / priceData.length / 2);
                 const color = d.close >= d.open ? '#00ff41' : '#ff3232';
                 ctx.strokeStyle = color; ctx.fillStyle = color;
-                // Wick
+                
                 ctx.beginPath(); ctx.moveTo(x, getY(d.high)); ctx.lineTo(x, getY(d.low)); ctx.stroke();
-                // Body
+                
                 const y1 = getY(d.open), y2 = getY(d.close);
                 ctx.fillRect(x - candleW/2, Math.min(y1, y2), candleW, Math.max(1, Math.abs(y1 - y2)));
             });
 
-            // UI Price Update
+            // Atualização de Preço Topo
             const last = priceData[priceData.length - 1];
             document.getElementById('price-display').textContent = `$${last.close.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             const change = ((last.close - priceData[0].close) / priceData[0].close * 100).toFixed(2);
             document.getElementById('change-display').textContent = `${change}%`;
             document.getElementById('change-display').style.color = change >= 0 ? '#00ff41' : '#ff3232';
             
-            updateSidebar(last.close, volAnalysis);
+            updateSupportWidget(volAnalysis);
         }
 
-        function updateSidebar(price, volAnalysis) {
-            // Orderbook Simulante/Dinâmico
-            let ob = '';
-            for(let i=0; i<8; i++) {
-                ob += `<div class="flex justify-between ${i<4 ? 'text-[#ff3232]' : 'text-[#00ff41]'}">
-                    <span>${(price + (4-i)*5).toFixed(1)}</span>
-                    <span>${(Math.random()*2).toFixed(3)}</span>
-                </div>`;
-            }
-            document.getElementById('orderbook').innerHTML = ob;
-
-            // Painel de Análise de Volume do Suporte ao Momento Atual
+        function updateSupportWidget(volAnalysis) {
             if (volAnalysis) {
                 document.getElementById('signal-panel').innerHTML = `
                     <div class="text-[10px] font-bold text-gray-300 mb-1">
@@ -282,7 +406,6 @@
                         Amostra: ${volAnalysis.candlesAnalyzed} velas desde o fundo
                     </div>
 
-                    <!-- Barra Proporcional de Volume -->
                     <div class="w-full h-3 bg-[#111] rounded overflow-hidden flex mb-2 border border-[#222]">
                         <div style="width: ${volAnalysis.buyPct}%; background: #00ff41;" class="h-full flex items-center justify-center text-[7px] text-black font-bold">
                             ${volAnalysis.buyPct > 15 ? volAnalysis.buyPct + '%' : ''}
@@ -297,7 +420,6 @@
                         <span class="text-[#ff3232]">VENDA: ${volAnalysis.sellPct}%</span>
                     </div>
 
-                    <!-- Afirmação Automatizada do Sistema -->
                     <div class="text-[9px] leading-snug p-2 rounded bg-[#050505] border" style="border-color: ${volAnalysis.statusColor}40; color: ${volAnalysis.statusColor};">
                         ${volAnalysis.statement}
                     </div>
@@ -305,7 +427,67 @@
             }
         }
 
-        // --- NEWS (CORRIGIDO VIA RSS2JSON) ---
+        // --- CALCULADORA DE STOP LOSS & TAKE PROFIT ---
+        function setPosType(type) {
+            posType = type;
+            const btnLong = document.getElementById('btn-long');
+            const btnShort = document.getElementById('btn-short');
+
+            if (type === 'LONG') {
+                btnLong.className = "pos-btn active-long flex-1 text-[9px] py-1 rounded border border-[#00ff41]";
+                btnShort.className = "pos-btn flex-1 text-[9px] py-1 rounded border border-[#333] text-[#555]";
+            } else {
+                btnShort.className = "pos-btn active-short flex-1 text-[9px] py-1 rounded border border-[#ff3232]";
+                btnLong.className = "pos-btn flex-1 text-[9px] py-1 rounded border border-[#333] text-[#555]";
+            }
+            calculateRiskReward();
+        }
+
+        function useCurrentPrice() {
+            if (priceData.length > 0) {
+                const currentPrice = priceData[priceData.length - 1].close;
+                document.getElementById('calc-entry').value = currentPrice.toFixed(1);
+                calculateRiskReward();
+            }
+        }
+
+        function calculateRiskReward() {
+            const entry = parseFloat(document.getElementById('calc-entry').value);
+            const capital = parseFloat(document.getElementById('calc-capital').value) || 0;
+            const slPct = parseFloat(document.getElementById('calc-sl-pct').value) || 0;
+            const tpPct = parseFloat(document.getElementById('calc-tp-pct').value) || 0;
+
+            if (!entry || entry <= 0) {
+                document.getElementById('res-sl-price').textContent = "—";
+                document.getElementById('res-sl-val').textContent = "—";
+                document.getElementById('res-tp-price').textContent = "—";
+                document.getElementById('res-tp-val').textContent = "—";
+                document.getElementById('res-rr').textContent = "—";
+                return;
+            }
+
+            let slPrice, tpPrice, lossVal, profitVal;
+
+            if (posType === 'LONG') {
+                slPrice = entry * (1 - (slPct / 100));
+                tpPrice = entry * (1 + (tpPct / 100));
+            } else { // SHORT
+                slPrice = entry * (1 + (slPct / 100));
+                tpPrice = entry * (1 - (tpPct / 100));
+            }
+
+            lossVal = capital * (slPct / 100);
+            profitVal = capital * (tpPct / 100);
+            const rrRatio = slPct > 0 ? (tpPct / slPct).toFixed(2) : "0.00";
+
+            document.getElementById('res-sl-price').textContent = `$${slPrice.toFixed(1)}`;
+            document.getElementById('res-sl-val').textContent = `-$${lossVal.toFixed(2)} (${slPct}%)`;
+            document.getElementById('res-tp-price').textContent = `$${tpPrice.toFixed(1)}`;
+            document.getElementById('res-tp-val').textContent = `+$${profitVal.toFixed(2)} (${tpPct}%)`;
+            document.getElementById('res-rr').textContent = `1 : ${rrRatio}`;
+        }
+
+        // --- NOTÍCIAS (COINTELEGRAPH BR) ---
         async function fetchNews() {
             const container = document.getElementById('news-container');
             try {
@@ -342,7 +524,7 @@
             } catch (e) {}
         }
 
-        // --- TIMEFRAME CLICKS ---
+        // --- SELEÇÃO DE TIMEFRAME ---
         document.querySelectorAll('.tf-btn').forEach(btn => {
             btn.onclick = async () => {
                 document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
@@ -351,15 +533,16 @@
                 currentTimeframe = btn.textContent;
                 priceData = [];
                 await fetchCandles(timeframeMap[currentTimeframe]);
-                initWS();
+                initKlineWS();
             };
         });
 
-        // --- BOOT ---
+        // --- BOOT SYSTEM ---
         window.onload = () => {
             setInterval(updateClock, 1000);
             fetchCandles('30m');
-            initWS();
+            initKlineWS();
+            initDepthWS();
             fetchNews();
             initTicker();
             setInterval(fetchNews, 300000);
