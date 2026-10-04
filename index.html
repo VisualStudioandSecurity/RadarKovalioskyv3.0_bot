@@ -72,8 +72,8 @@
                     <div id="orderbook" class="space-y-0.5 font-mono text-[10px]"></div>
                 </div>
                 <div class="p-3">
-                    <div class="text-[10px] font-bold mb-2 text-[#00ff41]">INDICATORS</div>
-                    <div id="signal-panel" class="text-center py-4 rounded bg-[#0a0a0a] border border-[#111]"></div>
+                    <div class="text-[10px] font-bold mb-2 text-[#00ff41]">ANÁLISE DE SUPORTE & FLUXO</div>
+                    <div id="signal-panel" class="p-3 rounded bg-[#0a0a0a] border border-[#111]"></div>
                 </div>
             </aside>
         </main>
@@ -112,7 +112,12 @@
                 const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=80`);
                 const data = await res.json();
                 priceData = data.map(c => ({
-                    time: c[0], open: parseFloat(c[1]), high: parseFloat(c[2]), low: parseFloat(c[3]), close: parseFloat(c[4])
+                    time: c[0], 
+                    open: parseFloat(c[1]), 
+                    high: parseFloat(c[2]), 
+                    low: parseFloat(c[3]), 
+                    close: parseFloat(c[4]),
+                    volume: parseFloat(c[5])
                 }));
                 renderAll();
             } catch (e) { console.error("API Error", e); }
@@ -126,7 +131,14 @@
             ws.onmessage = (e) => {
                 const msg = JSON.parse(e.data);
                 const k = msg.k;
-                const newCandle = { time: k.t, open: parseFloat(k.o), high: parseFloat(k.h), low: parseFloat(k.l), close: parseFloat(k.c) };
+                const newCandle = { 
+                    time: k.t, 
+                    open: parseFloat(k.o), 
+                    high: parseFloat(k.h), 
+                    low: parseFloat(k.l), 
+                    close: parseFloat(k.c),
+                    volume: parseFloat(k.v)
+                };
                 
                 if (priceData.length > 0 && priceData[priceData.length - 1].time === k.t) {
                     priceData[priceData.length - 1] = newCandle;
@@ -137,6 +149,59 @@
                 renderAll();
             };
             document.getElementById('status-badge').textContent = `● LIVE ${currentTimeframe}`;
+        }
+
+        // --- ALGORITMO: CÁLCULO DE VOLUME DO SUPORTE AO MOMENTO ATUAL ---
+        function calculateSupportVolume() {
+            if (!priceData || priceData.length < 5) return null;
+
+            // 1. Encontrar o suporte (fundo mais baixo da janela atual)
+            let minLow = Infinity;
+            let minIndex = 0;
+
+            priceData.forEach((d, i) => {
+                if (d.low < minLow) {
+                    minLow = d.low;
+                    minIndex = i;
+                }
+            });
+
+            // 2. Acumular o volume do suporte até o candle atual
+            let buyVol = 0;
+            let sellVol = 0;
+            const candlesAnalyzed = priceData.length - minIndex;
+
+            for (let i = minIndex; i < priceData.length; i++) {
+                const c = priceData[i];
+                if (c.close >= c.open) {
+                    buyVol += c.volume;
+                } else {
+                    sellVol += c.volume;
+                }
+            }
+
+            const totalVol = buyVol + sellVol;
+            if (totalVol === 0) return null;
+
+            const buyPct = Math.round((buyVol / totalVol) * 100);
+            const sellPct = 100 - buyPct;
+
+            // 3. Gerar Afirmação Automatizada
+            let statement = "";
+            let statusColor = "#00ff41";
+
+            if (buyPct >= 60) {
+                statement = `Forte absorção compradora. Suporte em $${minLow.toFixed(1)} acumulou demanda relevante.`;
+                statusColor = "#00ff41";
+            } else if (sellPct >= 60) {
+                statement = `Pressão vendedora no topo. Teste do suporte em $${minLow.toFixed(1)} sob risco.`;
+                statusColor = "#ff3232";
+            } else {
+                statement = `Fluxo equilibrado no movimento do suporte até o preço atual.`;
+                statusColor = "#ffaa00";
+            }
+
+            return { minLow, minIndex, buyPct, sellPct, buyVol, sellVol, candlesAnalyzed, statement, statusColor };
         }
 
         // --- CHART RENDERER ---
@@ -151,6 +216,27 @@
             const maxP = Math.max(...priceData.map(d => d.high)), minP = Math.min(...priceData.map(d => d.low));
             const range = maxP - minP;
             const getY = (p) => pad.t + drawH - ((p - minP) / range) * drawH;
+
+            // Análise de Suporte
+            const volAnalysis = calculateSupportVolume();
+
+            // Desenhando a linha de suporte no Canvas
+            if (volAnalysis) {
+                const supY = getY(volAnalysis.minLow);
+                ctx.save();
+                ctx.strokeStyle = '#00ff4188';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(pad.l, supY);
+                ctx.lineTo(w - pad.r, supY);
+                ctx.stroke();
+                
+                ctx.fillStyle = '#00ff41';
+                ctx.font = '9px JetBrains Mono';
+                ctx.fillText(`SUPORTE: $${volAnalysis.minLow.toFixed(1)}`, pad.l + 5, supY - 4);
+                ctx.restore();
+            }
 
             // Candles
             const candleW = (drawW / priceData.length) * 0.8;
@@ -167,15 +253,16 @@
 
             // UI Price Update
             const last = priceData[priceData.length - 1];
-            document.getElementById('price-display').textContent = `$${last.close.toLocaleString()}`;
+            document.getElementById('price-display').textContent = `$${last.close.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             const change = ((last.close - priceData[0].close) / priceData[0].close * 100).toFixed(2);
             document.getElementById('change-display').textContent = `${change}%`;
             document.getElementById('change-display').style.color = change >= 0 ? '#00ff41' : '#ff3232';
             
-            updateSidebar(last.close);
+            updateSidebar(last.close, volAnalysis);
         }
 
-        function updateSidebar(price) {
+        function updateSidebar(price, volAnalysis) {
+            // Orderbook Simulante/Dinâmico
             let ob = '';
             for(let i=0; i<8; i++) {
                 ob += `<div class="flex justify-between ${i<4 ? 'text-[#ff3232]' : 'text-[#00ff41]'}">
@@ -184,10 +271,38 @@
                 </div>`;
             }
             document.getElementById('orderbook').innerHTML = ob;
-            document.getElementById('signal-panel').innerHTML = `
-                <div class="text-xs font-bold text-[#00ff41]">NEURAL BUY</div>
-                <div class="text-[9px] text-[#444] mt-1 text-uppercase">RSI Optimized</div>
-            `;
+
+            // Painel de Análise de Volume do Suporte ao Momento Atual
+            if (volAnalysis) {
+                document.getElementById('signal-panel').innerHTML = `
+                    <div class="text-[10px] font-bold text-gray-300 mb-1">
+                        SUPORTE: <span class="text-[#00ff41]">$${volAnalysis.minLow.toFixed(1)}</span>
+                    </div>
+                    <div class="text-[8px] text-[#555] mb-2">
+                        Amostra: ${volAnalysis.candlesAnalyzed} velas desde o fundo
+                    </div>
+
+                    <!-- Barra Proporcional de Volume -->
+                    <div class="w-full h-3 bg-[#111] rounded overflow-hidden flex mb-2 border border-[#222]">
+                        <div style="width: ${volAnalysis.buyPct}%; background: #00ff41;" class="h-full flex items-center justify-center text-[7px] text-black font-bold">
+                            ${volAnalysis.buyPct > 15 ? volAnalysis.buyPct + '%' : ''}
+                        </div>
+                        <div style="width: ${volAnalysis.sellPct}%; background: #ff3232;" class="h-full flex items-center justify-center text-[7px] text-white font-bold">
+                            ${volAnalysis.sellPct > 15 ? volAnalysis.sellPct + '%' : ''}
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between text-[9px] mb-2 font-bold">
+                        <span class="text-[#00ff41]">COMPRA: ${volAnalysis.buyPct}%</span>
+                        <span class="text-[#ff3232]">VENDA: ${volAnalysis.sellPct}%</span>
+                    </div>
+
+                    <!-- Afirmação Automatizada do Sistema -->
+                    <div class="text-[9px] leading-snug p-2 rounded bg-[#050505] border" style="border-color: ${volAnalysis.statusColor}40; color: ${volAnalysis.statusColor};">
+                        ${volAnalysis.statement}
+                    </div>
+                `;
+            }
         }
 
         // --- NEWS (CORRIGIDO VIA RSS2JSON) ---
@@ -234,7 +349,7 @@
                 btn.classList.add('active');
                 
                 currentTimeframe = btn.textContent;
-                priceData = []; // Limpa o gráfico para o novo dado
+                priceData = [];
                 await fetchCandles(timeframeMap[currentTimeframe]);
                 initWS();
             };
