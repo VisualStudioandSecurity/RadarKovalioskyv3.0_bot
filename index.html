@@ -69,6 +69,49 @@
             </div>
 
             <aside class="w-72 border-l border-[#111] flex flex-col bg-[#080808] overflow-y-auto">
+                <!-- CONFIGURAÇÃO DO MOTOR (MODOS DE OPERAÇÃO) -->
+                <div class="p-3 border-b border-[#111]">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold text-[#00ff41]">MODO DO MOTOR</span>
+                        <span id="engine-mode-badge" class="text-[8px] px-1.5 py-0.5 rounded bg-[#00ff4120] text-[#00ff41] font-bold">DAYTRADE</span>
+                    </div>
+
+                    <!-- BOTÕES DE PRESET RÁPIDO -->
+                    <div class="grid grid-cols-3 gap-1 mb-2.5">
+                        <button onclick="setEngineProfile('SCALPING')" id="btn-mode-scalping" class="mode-btn text-[8px] py-1 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">⚡ 5 MIN (500)</button>
+                        <button onclick="setEngineProfile('DAYTRADE')" id="btn-mode-daytrade" class="mode-btn text-[8px] py-1 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]">🎯 10 MIN (1k)</button>
+                        <button onclick="setEngineProfile('SWING')" id="btn-mode-swing" class="mode-btn text-[8px] py-1 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">🐋 25 MIN (5k)</button>
+                    </div>
+
+                    <!-- CONTROLES MANUAIS EXPANDÍVEIS -->
+                    <details class="text-[8px] text-[#555]">
+                        <summary class="cursor-pointer hover:text-[#00ff41] select-none">⚙️ Ajuste Fino Manual</summary>
+                        <div class="mt-2 space-y-2 bg-[#050505] p-2 rounded border border-[#111]">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>JANELA TEMPORAL:</span>
+                                    <span id="lbl-age" class="text-[#00ff41]">600s (10m)</span>
+                                </div>
+                                <input type="range" id="cfg-age" min="30" max="1800" value="600" step="30" class="w-full accent-[#00ff41]" oninput="updateCustomEngine()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>VOL MÍNIMO (BTC):</span>
+                                    <span id="lbl-min-vol" class="text-[#00ff41]">0.05 BTC</span>
+                                </div>
+                                <input type="range" id="cfg-min-vol" min="0.001" max="1" value="0.05" step="0.005" class="w-full accent-[#00ff41]" oninput="updateCustomEngine()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>SINAL EXIGIDO (%):</span>
+                                    <span id="lbl-threshold" class="text-[#00ff41]">65%</span>
+                                </div>
+                                <input type="range" id="cfg-threshold" min="55" max="80" value="65" step="1" class="w-full accent-[#00ff41]" oninput="updateCustomEngine()">
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
                 <!-- ORDER BOOK (REAL-TIME BINANCE WS) -->
                 <div class="p-3 border-b border-[#111]">
                     <div class="flex justify-between items-center mb-2">
@@ -80,9 +123,9 @@
                     </div>
                 </div>
 
-                <!-- ANÁLISE DE PRESSÃO & 200 ORDENS -->
+                <!-- ANÁLISE DE PRESSÃO & BALEIAS -->
                 <div class="p-3 border-b border-[#111]">
-                    <div class="text-[10px] font-bold mb-2 text-[#00ff41]">PRESSÃO DE MERCADO (200 ORDENS)</div>
+                    <div class="text-[10px] font-bold mb-2 text-[#00ff41]">PRESSÃO DE MERCADO</div>
                     <div id="signal-panel" class="p-3 rounded bg-[#0a0a0a] border border-[#111]">
                         <div class="text-[9px] text-[#555] text-center">Aguardando fluxo de ordens...</div>
                     </div>
@@ -173,9 +216,85 @@
         const canvas = document.getElementById('chart-canvas');
         const ctx = canvas.getContext('2d');
 
-        // --- BUFFER DAS 200 ORDENS ---
+        // --- PERFIS DO MOTOR RECONFIGURADOS ---
+        const ENGINE_PROFILES = {
+            SCALPING: {
+                name: "RÁPIDO (5 MIN)",
+                minOrderQtyBTC: 0.01,
+                maxOrderAgeSeconds: 300,  // 5 minutos
+                signalThresholdPct: 60,
+                maxOrders: 500            // 500 ordens
+            },
+            DAYTRADE: {
+                name: "NORMAL (10 MIN)",
+                minOrderQtyBTC: 0.05,
+                maxOrderAgeSeconds: 600,  // 10 minutos
+                signalThresholdPct: 65,
+                maxOrders: 1000           // 1000 ordens
+            },
+            SWING: {
+                name: "LONGO (25 MIN)",
+                minOrderQtyBTC: 0.25,
+                maxOrderAgeSeconds: 1500, // 25 minutos
+                signalThresholdPct: 70,
+                maxOrders: 5000           // 5000 ordens
+            }
+        };
+
+        // Estado atual (Inicia no modo Normal / Day Trade)
+        let currentEngineConfig = { ...ENGINE_PROFILES.DAYTRADE };
         let orderBuffer = [];
-        const MAX_ORDERS = 1000;
+
+        function formatTimeLabel(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            if (mins > 0 && secs === 0) return `${seconds}s (${mins}m)`;
+            if (mins > 0) return `${seconds}s (${mins}m ${secs}s)`;
+            return `${seconds}s`;
+        }
+
+        function setEngineProfile(profileKey) {
+            if (!ENGINE_PROFILES[profileKey]) return;
+            
+            currentEngineConfig = { ...ENGINE_PROFILES[profileKey] };
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.className = "mode-btn text-[8px] py-1 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]";
+            });
+
+            const activeBtn = document.getElementById(`btn-mode-${profileKey.toLowerCase()}`);
+            if (activeBtn) {
+                activeBtn.className = "mode-btn text-[8px] py-1 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]";
+            }
+
+            const badge = document.getElementById('engine-mode-badge');
+            if (badge) badge.textContent = profileKey;
+
+            document.getElementById('cfg-age').value = currentEngineConfig.maxOrderAgeSeconds;
+            document.getElementById('cfg-min-vol').value = currentEngineConfig.minOrderQtyBTC;
+            document.getElementById('cfg-threshold').value = currentEngineConfig.signalThresholdPct;
+
+            document.getElementById('lbl-age').textContent = formatTimeLabel(currentEngineConfig.maxOrderAgeSeconds);
+            document.getElementById('lbl-min-vol').textContent = `${currentEngineConfig.minOrderQtyBTC} BTC`;
+            document.getElementById('lbl-threshold').textContent = `${currentEngineConfig.signalThresholdPct}%`;
+
+            analyzeEngineWithFilters();
+        }
+
+        function updateCustomEngine() {
+            currentEngineConfig.maxOrderAgeSeconds = parseFloat(document.getElementById('cfg-age').value);
+            currentEngineConfig.minOrderQtyBTC = parseFloat(document.getElementById('cfg-min-vol').value);
+            currentEngineConfig.signalThresholdPct = parseFloat(document.getElementById('cfg-threshold').value);
+
+            document.getElementById('lbl-age').textContent = formatTimeLabel(currentEngineConfig.maxOrderAgeSeconds);
+            document.getElementById('lbl-min-vol').textContent = `${currentEngineConfig.minOrderQtyBTC} BTC`;
+            document.getElementById('lbl-threshold').textContent = `${currentEngineConfig.signalThresholdPct}%`;
+
+            const badge = document.getElementById('engine-mode-badge');
+            if (badge) badge.textContent = "CUSTOM";
+
+            analyzeEngineWithFilters();
+        }
 
         function updateClock() {
             document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
@@ -255,30 +374,45 @@
         }
 
         function processMarketTrade(trade) {
+            const tradePrice = parseFloat(trade.p);
+            const tradeQty = parseFloat(trade.q);
+            const tradeTime = trade.T;
+            const isSell = trade.m;
+
+            if (tradeQty < currentEngineConfig.minOrderQtyBTC) return;
+
             orderBuffer.push({
-                price: parseFloat(trade.p),
-                qty: parseFloat(trade.q),
-                isSell: trade.m, // true = Venda, false = Compra
-                time: trade.T
+                price: tradePrice,
+                qty: tradeQty,
+                isSell: isSell,
+                time: tradeTime
             });
 
-            if (orderBuffer.length > MAX_ORDERS) {
+            if (orderBuffer.length > currentEngineConfig.maxOrders) {
                 orderBuffer.shift();
             }
 
-            analyzePressureAndBigOrders();
+            analyzeEngineWithFilters();
         }
 
-        function analyzePressureAndBigOrders() {
-            if (orderBuffer.length === 0) return;
+        function analyzeEngineWithFilters() {
+            const now = Date.now();
 
-            let buyVolume = 0;
-            let sellVolume = 0;
-            let buyCount = 0;
-            let sellCount = 0;
+            orderBuffer = orderBuffer.filter(order => {
+                const ageInSeconds = (now - order.time) / 1000;
+                return ageInSeconds <= currentEngineConfig.maxOrderAgeSeconds;
+            });
 
-            let buyOrders = [];
-            let sellOrders = [];
+            if (orderBuffer.length === 0) {
+                const container = document.getElementById('signal-panel');
+                if (container) {
+                    container.innerHTML = `<div class="text-[8px] text-[#555] text-center">Nenhuma ordem dentro dos critérios atuais (${currentEngineConfig.minOrderQtyBTC} BTC / ${formatTimeLabel(currentEngineConfig.maxOrderAgeSeconds)})</div>`;
+                }
+                return;
+            }
+
+            let buyVolume = 0, sellVolume = 0, buyCount = 0, sellCount = 0;
+            let buyOrders = [], sellOrders = [];
 
             orderBuffer.forEach(order => {
                 if (order.isSell) {
@@ -299,32 +433,32 @@
             buyOrders.sort((a, b) => b.qty - a.qty);
             sellOrders.sort((a, b) => b.qty - a.qty);
 
-            const topBuy = buyOrders[0];
-            const topSell = sellOrders[0];
-
-            renderPressurePanel(buyPct, sellPct, buyVolume, sellVolume, buyCount, sellCount, topBuy, topSell);
+            renderFilteredPressurePanel(buyPct, sellPct, buyVolume, sellVolume, buyCount, sellCount, buyOrders[0], sellOrders[0]);
         }
 
-        function renderPressurePanel(buyPct, sellPct, buyVol, sellVol, buyCnt, sellCnt, topBuy, topSell) {
+        function renderFilteredPressurePanel(buyPct, sellPct, buyVol, sellVol, buyCnt, sellCnt, topBuy, topSell) {
             const container = document.getElementById('signal-panel');
             if (!container) return;
 
-            let statusText = "MERCADO NEUTRO";
+            const bPct = parseFloat(buyPct);
+            const sPct = parseFloat(sellPct);
+
+            let statusText = "MERCADO EQUILIBRADO";
             let statusColor = "#ffaa00";
 
-            if (parseFloat(buyPct) >= 60) {
-                statusText = "ALTA PRESSÃO COMPRADORA";
+            if (bPct >= currentEngineConfig.signalThresholdPct) {
+                statusText = `FORTE PRESSÃO COMPRADORA (≥${currentEngineConfig.signalThresholdPct}%)`;
                 statusColor = "#00ff41";
-            } else if (parseFloat(sellPct) >= 60) {
-                statusText = "ALTA PRESSÃO VENDEDORA";
+            } else if (sPct >= currentEngineConfig.signalThresholdPct) {
+                statusText = `FORTE PRESSÃO VENDEDORA (≥${currentEngineConfig.signalThresholdPct}%)`;
                 statusColor = "#ff3232";
             }
 
             container.innerHTML = `
-                <div class="text-[10px] font-bold mb-1" style="color: ${statusColor}">
+                <div class="text-[9px] font-bold mb-1" style="color: ${statusColor}">
                     ${statusText}
                 </div>
-                
+
                 <div class="w-full h-3 bg-[#111] rounded overflow-hidden flex my-2 border border-[#222]">
                     <div style="width: ${buyPct}%; background: #00ff41;" class="h-full flex items-center justify-center text-[7px] text-black font-bold">
                         ${buyPct}%
@@ -346,7 +480,10 @@
                 </div>
 
                 <div class="pt-2 border-t border-[#111]">
-                    <div class="text-[8px] text-[#777] font-bold mb-1">MAIORES ORDENS (TOP BALEIAS)</div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[8px] text-[#777] font-bold">MAIORES ORDENS (TOP BALEIAS)</span>
+                        <span class="text-[7px] text-[#00ff41]">> ${currentEngineConfig.minOrderQtyBTC} BTC</span>
+                    </div>
                     <div class="text-[8px] space-y-1">
                         <div class="text-[#00ff41]">
                             🟢 Compra: $${topBuy ? topBuy.price.toFixed(1) : '—'} (${topBuy ? topBuy.qty.toFixed(3) : '0'} BTC)
