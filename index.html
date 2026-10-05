@@ -80,10 +80,12 @@
                     </div>
                 </div>
 
-                <!-- ANÁLISE DE SUPORTE & FLUXO -->
+                <!-- ANÁLISE DE PRESSÃO & 200 ORDENS -->
                 <div class="p-3 border-b border-[#111]">
-                    <div class="text-[10px] font-bold mb-2 text-[#00ff41]">ANÁLISE DE SUPORTE & FLUXO</div>
-                    <div id="signal-panel" class="p-3 rounded bg-[#0a0a0a] border border-[#111]"></div>
+                    <div class="text-[10px] font-bold mb-2 text-[#00ff41]">PRESSÃO DE MERCADO (200 ORDENS)</div>
+                    <div id="signal-panel" class="p-3 rounded bg-[#0a0a0a] border border-[#111]">
+                        <div class="text-[9px] text-[#555] text-center">Aguardando fluxo de ordens...</div>
+                    </div>
                 </div>
 
                 <!-- CALCULADORA DE STOP LOSS & TAKE PROFIT -->
@@ -166,9 +168,14 @@
         const timeframeMap = { 'M30': '30m', 'H1': '1h', 'H4': '4h', 'D1': '1d' };
         let klineWs = null;
         let depthWs = null;
+        let tradeWs = null;
         let posType = 'LONG';
         const canvas = document.getElementById('chart-canvas');
         const ctx = canvas.getContext('2d');
+
+        // --- BUFFER DAS 200 ORDENS ---
+        let orderBuffer = [];
+        const MAX_ORDERS = 200;
 
         function updateClock() {
             document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
@@ -237,6 +244,121 @@
             };
         }
 
+        function initTradeWS() {
+            if (tradeWs) tradeWs.close();
+            tradeWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
+
+            tradeWs.onmessage = (e) => {
+                const trade = JSON.parse(e.data);
+                processMarketTrade(trade);
+            };
+        }
+
+        function processMarketTrade(trade) {
+            orderBuffer.push({
+                price: parseFloat(trade.p),
+                qty: parseFloat(trade.q),
+                isSell: trade.m, // true = Venda, false = Compra
+                time: trade.T
+            });
+
+            if (orderBuffer.length > MAX_ORDERS) {
+                orderBuffer.shift();
+            }
+
+            analyzePressureAndBigOrders();
+        }
+
+        function analyzePressureAndBigOrders() {
+            if (orderBuffer.length === 0) return;
+
+            let buyVolume = 0;
+            let sellVolume = 0;
+            let buyCount = 0;
+            let sellCount = 0;
+
+            let buyOrders = [];
+            let sellOrders = [];
+
+            orderBuffer.forEach(order => {
+                if (order.isSell) {
+                    sellVolume += order.qty;
+                    sellCount++;
+                    sellOrders.push(order);
+                } else {
+                    buyVolume += order.qty;
+                    buyCount++;
+                    buyOrders.push(order);
+                }
+            });
+
+            const totalVolume = buyVolume + sellVolume;
+            const buyPct = totalVolume > 0 ? ((buyVolume / totalVolume) * 100).toFixed(1) : "50.0";
+            const sellPct = totalVolume > 0 ? ((sellVolume / totalVolume) * 100).toFixed(1) : "50.0";
+
+            buyOrders.sort((a, b) => b.qty - a.qty);
+            sellOrders.sort((a, b) => b.qty - a.qty);
+
+            const topBuy = buyOrders[0];
+            const topSell = sellOrders[0];
+
+            renderPressurePanel(buyPct, sellPct, buyVolume, sellVolume, buyCount, sellCount, topBuy, topSell);
+        }
+
+        function renderPressurePanel(buyPct, sellPct, buyVol, sellVol, buyCnt, sellCnt, topBuy, topSell) {
+            const container = document.getElementById('signal-panel');
+            if (!container) return;
+
+            let statusText = "MERCADO NEUTRO";
+            let statusColor = "#ffaa00";
+
+            if (parseFloat(buyPct) >= 60) {
+                statusText = "ALTA PRESSÃO COMPRADORA";
+                statusColor = "#00ff41";
+            } else if (parseFloat(sellPct) >= 60) {
+                statusText = "ALTA PRESSÃO VENDEDORA";
+                statusColor = "#ff3232";
+            }
+
+            container.innerHTML = `
+                <div class="text-[10px] font-bold mb-1" style="color: ${statusColor}">
+                    ${statusText}
+                </div>
+                
+                <div class="w-full h-3 bg-[#111] rounded overflow-hidden flex my-2 border border-[#222]">
+                    <div style="width: ${buyPct}%; background: #00ff41;" class="h-full flex items-center justify-center text-[7px] text-black font-bold">
+                        ${buyPct}%
+                    </div>
+                    <div style="width: ${sellPct}%; background: #ff3232;" class="h-full flex items-center justify-center text-[7px] text-white font-bold">
+                        ${sellPct}%
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-[8px] my-2 text-gray-400">
+                    <div>
+                        <span class="text-[#00ff41] font-bold">COMPRAS:</span> ${buyCnt} ordens<br>
+                        <span>VOL: ${buyVol.toFixed(3)} BTC</span>
+                    </div>
+                    <div>
+                        <span class="text-[#ff3232] font-bold">VENDAS:</span> ${sellCnt} ordens<br>
+                        <span>VOL: ${sellVol.toFixed(3)} BTC</span>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-[#111]">
+                    <div class="text-[8px] text-[#777] font-bold mb-1">MAIORES ORDENS (TOP BALEIAS)</div>
+                    <div class="text-[8px] space-y-1">
+                        <div class="text-[#00ff41]">
+                            🟢 Compra: $${topBuy ? topBuy.price.toFixed(1) : '—'} (${topBuy ? topBuy.qty.toFixed(3) : '0'} BTC)
+                        </div>
+                        <div class="text-[#ff3232]">
+                            🔴 Venda: $${topSell ? topSell.price.toFixed(1) : '—'} (${topSell ? topSell.qty.toFixed(3) : '0'} BTC)
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         function renderRealOrderBook(bids, asks) {
             const container = document.getElementById('orderbook');
             if (!container) return;
@@ -278,54 +400,6 @@
             container.innerHTML = html;
         }
 
-        function calculateSupportVolume() {
-            if (!priceData || priceData.length < 5) return null;
-
-            let minLow = Infinity;
-            let minIndex = 0;
-
-            priceData.forEach((d, i) => {
-                if (d.low < minLow) {
-                    minLow = d.low;
-                    minIndex = i;
-                }
-            });
-
-            let buyVol = 0;
-            let sellVol = 0;
-
-            for (let i = minIndex; i < priceData.length; i++) {
-                const c = priceData[i];
-                if (c.close >= c.open) {
-                    buyVol += c.volume;
-                } else {
-                    sellVol += c.volume;
-                }
-            }
-
-            const totalVol = buyVol + sellVol;
-            if (totalVol === 0) return null;
-
-            const buyPct = Math.round((buyVol / totalVol) * 100);
-            const sellPct = 100 - buyPct;
-
-            let statement = "";
-            let statusColor = "#00ff41";
-
-            if (buyPct >= 60) {
-                statement = `Forte absorção compradora. Suporte em $${minLow.toFixed(1)} acumulou demanda relevante.`;
-                statusColor = "#00ff41";
-            } else if (sellPct >= 60) {
-                statement = `Pressão vendedora no topo. Teste do suporte em $${minLow.toFixed(1)} sob risco.`;
-                statusColor = "#ff3232";
-            } else {
-                statement = `Fluxo equilibrado no movimento do suporte até o preço atual.`;
-                statusColor = "#ffaa00";
-            }
-
-            return { minLow, minIndex, buyPct, sellPct, buyVol, sellVol, candlesAnalyzed: priceData.length - minIndex, statement, statusColor };
-        }
-
         function renderAll() {
             if (priceData.length === 0) return;
             const w = canvas.width = canvas.parentElement.clientWidth;
@@ -337,25 +411,6 @@
             const maxP = Math.max(...priceData.map(d => d.high)), minP = Math.min(...priceData.map(d => d.low));
             const range = maxP - minP;
             const getY = (p) => pad.t + drawH - ((p - minP) / range) * drawH;
-
-            const volAnalysis = calculateSupportVolume();
-
-            if (volAnalysis) {
-                const supY = getY(volAnalysis.minLow);
-                ctx.save();
-                ctx.strokeStyle = '#00ff4188';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([4, 4]);
-                ctx.beginPath();
-                ctx.moveTo(pad.l, supY);
-                ctx.lineTo(w - pad.r, supY);
-                ctx.stroke();
-                
-                ctx.fillStyle = '#00ff41';
-                ctx.font = '9px JetBrains Mono';
-                ctx.fillText(`SUPORTE: $${volAnalysis.minLow.toFixed(1)}`, pad.l + 5, supY - 4);
-                ctx.restore();
-            }
 
             const candleW = (drawW / priceData.length) * 0.8;
             priceData.forEach((d, i) => {
@@ -374,39 +429,6 @@
             const change = ((last.close - priceData[0].close) / priceData[0].close * 100).toFixed(2);
             document.getElementById('change-display').textContent = `${change}%`;
             document.getElementById('change-display').style.color = change >= 0 ? '#00ff41' : '#ff3232';
-            
-            updateSupportWidget(volAnalysis);
-        }
-
-        function updateSupportWidget(volAnalysis) {
-            if (volAnalysis) {
-                document.getElementById('signal-panel').innerHTML = `
-                    <div class="text-[10px] font-bold text-gray-300 mb-1">
-                        SUPORTE: <span class="text-[#00ff41]">$${volAnalysis.minLow.toFixed(1)}</span>
-                    </div>
-                    <div class="text-[8px] text-[#555] mb-2">
-                        Amostra: ${volAnalysis.candlesAnalyzed} velas desde o fundo
-                    </div>
-
-                    <div class="w-full h-3 bg-[#111] rounded overflow-hidden flex mb-2 border border-[#222]">
-                        <div style="width: ${volAnalysis.buyPct}%; background: #00ff41;" class="h-full flex items-center justify-center text-[7px] text-black font-bold">
-                            ${volAnalysis.buyPct > 15 ? volAnalysis.buyPct + '%' : ''}
-                        </div>
-                        <div style="width: ${volAnalysis.sellPct}%; background: #ff3232;" class="h-full flex items-center justify-center text-[7px] text-white font-bold">
-                            ${volAnalysis.sellPct > 15 ? volAnalysis.sellPct + '%' : ''}
-                        </div>
-                    </div>
-
-                    <div class="flex justify-between text-[9px] mb-2 font-bold">
-                        <span class="text-[#00ff41]">COMPRA: ${volAnalysis.buyPct}%</span>
-                        <span class="text-[#ff3232]">VENDA: ${volAnalysis.sellPct}%</span>
-                    </div>
-
-                    <div class="text-[9px] leading-snug p-2 rounded bg-[#050505] border" style="border-color: ${volAnalysis.statusColor}40; color: ${volAnalysis.statusColor};">
-                        ${volAnalysis.statement}
-                    </div>
-                `;
-            }
         }
 
         function setPosType(type) {
@@ -527,6 +549,7 @@
             fetchCandles('30m');
             initKlineWS();
             initDepthWS();
+            initTradeWS();
             fetchNews();
             initTicker();
             setInterval(fetchNews, 300000);
