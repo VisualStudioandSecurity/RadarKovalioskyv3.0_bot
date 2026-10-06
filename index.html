@@ -32,6 +32,9 @@
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 rounded-full pulse-glow" style="background: #00ff41; box-shadow: 0 0 8px #00ff41;"></div>
                 <span class="text-sm font-bold tracking-widest uppercase" style="font-family: 'Orbitron';">VISUAL CRIPTO HUB</span>
+                
+                <!-- BOTÃO DE NAVEGAÇÃO PARA A ENGINE MULTI-ATIVOS -->
+                <a href="altcoins.html" class="text-[10px] text-[#00ff41] hover:underline bg-[#050505] px-2 py-1 rounded border border-[#00ff4140]">🔄 MULTI-ATIVOS (ETH, XAU, SOL)</a>
             </div>
             <div class="flex items-center gap-4 text-xs">
                 <span id="clock">00:00:00</span>
@@ -123,7 +126,7 @@
                     </div>
                 </div>
 
-                <!-- ANÁLISE DE PRESSÃO & BALEIAS -->
+                <!-- ANÁLISE DE PRESSÃO & CRONÓMETRO -->
                 <div class="p-3 border-b border-[#111]">
                     <div class="text-[10px] font-bold mb-2 text-[#00ff41]">PRESSÃO DE MERCADO</div>
                     <div id="signal-panel" class="p-3 rounded bg-[#0a0a0a] border border-[#111]">
@@ -190,6 +193,16 @@
                 </div>
             </aside>
         </main>
+
+        <div class="relative z-10 border-t border-[#111] bg-[#080808]" style="height: 180px;">
+            <div class="p-2 border-b border-[#111] flex justify-between items-center bg-[#0a0a0a]">
+                <div class="text-[10px] font-bold text-[#00ff41]">📰 NEWS FEED (COINTELEGRAPH BR)</div>
+            </div>
+            <div id="news-container" class="overflow-y-auto h-[140px] p-2">
+                <div class="text-[10px] text-center py-4 text-[#333]">SYNCING DATA...</div>
+            </div>
+        </div>
+
         <footer class="relative z-10 text-center py-1 border-t border-[#111] bg-[#080808]">
             <span class="text-[9px] text-[#1a3a1a]">© 2026 Visual Studio | Kovaliosky DeV</span>
         </footer>
@@ -234,6 +247,19 @@
         // Estado atual (Inicia no modo Normal / Day Trade)
         let currentEngineConfig = { ...ENGINE_PROFILES.DAYTRADE };
         let orderBuffer = [];
+
+        // --- CRONÓMETRO E HISTÓRICO DE PRESSÃO ---
+        let currentPressureState = 'NEUTRAL'; // 'BUY', 'SELL' ou 'NEUTRAL'
+        let pressureStartTime = Date.now();
+        let pressureHistory = [];
+
+        function formatDuration(ms) {
+            const totalSecs = Math.floor(ms / 1000);
+            const mins = Math.floor(totalSecs / 60);
+            const secs = totalSecs % 60;
+            if (mins > 0) return `${mins}m ${secs}s`;
+            return `${secs}s`;
+        }
 
         function formatTimeLabel(seconds) {
             const mins = Math.floor(seconds / 60);
@@ -433,15 +459,59 @@
             const bPct = parseFloat(buyPct);
             const sPct = parseFloat(sellPct);
 
+            // 1. Determinar Estado da Pressão
+            let newState = 'NEUTRAL';
             let statusText = "MERCADO EQUILIBRADO";
             let statusColor = "#ffaa00";
 
             if (bPct >= currentEngineConfig.signalThresholdPct) {
-                statusText = `FORTE PRESSÃO COMPRADORA (≥${currentEngineConfig.signalThresholdPct}%)`;
+                newState = 'BUY';
+                statusText = `FORTE PRESSÃO COMPRADORA (${bPct}%)`;
                 statusColor = "#00ff41";
             } else if (sPct >= currentEngineConfig.signalThresholdPct) {
-                statusText = `FORTE PRESSÃO VENDEDORA (≥${currentEngineConfig.signalThresholdPct}%)`;
+                newState = 'SELL';
+                statusText = `FORTE PRESSÃO VENDEDORA (${sPct}%)`;
                 statusColor = "#ff3232";
+            }
+
+            // 2. Deteção de Mudança de Estado e Registo do Histórico
+            if (newState !== currentPressureState) {
+                const lastDurationMs = Date.now() - pressureStartTime;
+
+                if (currentPressureState !== 'NEUTRAL' && lastDurationMs > 3000) {
+                    pressureHistory.unshift({
+                        type: currentPressureState,
+                        duration: formatDuration(lastDurationMs),
+                        pct: currentPressureState === 'BUY' ? bPct : sPct,
+                        time: new Date().toLocaleTimeString('pt-BR')
+                    });
+                    if (pressureHistory.length > 3) pressureHistory.pop();
+                }
+
+                currentPressureState = newState;
+                pressureStartTime = Date.now();
+            }
+
+            // 3. Duração Atual
+            const elapsedMs = Date.now() - pressureStartTime;
+            const durationText = formatDuration(elapsedMs);
+
+            // 4. Renderizar Histórico se Existir
+            let historyHtml = '';
+            if (pressureHistory.length > 0) {
+                historyHtml = `
+                    <div class="mt-2 pt-2 border-t border-[#111]">
+                        <div class="text-[7px] text-[#555] font-bold mb-1 uppercase">Últimos Impulsos Registados</div>
+                        <div class="space-y-1">
+                            ${pressureHistory.map(h => `
+                                <div class="flex justify-between text-[7px] ${h.type === 'BUY' ? 'text-[#00ff4188]' : 'text-[#ff323288]'}">
+                                    <span>${h.type === 'BUY' ? '🟢 COMPRA' : '🔴 VENDA'} (${h.duration})</span>
+                                    <span>${h.time}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
             }
 
             container.innerHTML = `
@@ -449,7 +519,16 @@
                     ${statusText}
                 </div>
 
-                <div class="w-full h-3 bg-[#111] rounded overflow-hidden flex my-2 border border-[#222]">
+                <!-- CRONÓMETRO DE DURAÇÃO -->
+                <div class="flex items-center gap-1.5 text-[8px] text-gray-300 mb-2">
+                    <span class="text-[#777]">⏱️ DURAÇÃO:</span>
+                    <span class="font-bold text-white bg-[#111] px-1.5 py-0.5 rounded border border-[#222]">
+                        ${durationText}
+                    </span>
+                    ${currentPressureState !== 'NEUTRAL' ? '<span class="text-[7px] text-[#00ff41] animate-pulse">● ATIVO</span>' : ''}
+                </div>
+
+                <div class="w-full h-3 bg-[#111] rounded overflow-hidden flex my-1 border border-[#222]">
                     <div style="width: ${buyPct}%; background: #00ff41;" class="h-full flex items-center justify-center text-[7px] text-black font-bold">
                         ${buyPct}%
                     </div>
@@ -483,6 +562,8 @@
                         </div>
                     </div>
                 </div>
+
+                ${historyHtml}
             `;
         }
 
@@ -536,7 +617,7 @@
             const pad = { t: 30, b: 30, r: 60, l: 10 };
             const drawW = w - pad.l - pad.r, drawH = h - pad.t - pad.b;
             const maxP = Math.max(...priceData.map(d => d.high)), minP = Math.min(...priceData.map(d => d.low));
-            const range = maxP - minP;
+            const range = maxP - minP || 1;
             const getY = (p) => pad.t + drawH - ((p - minP) / range) * drawH;
 
             const candleW = (drawW / priceData.length) * 0.8;
