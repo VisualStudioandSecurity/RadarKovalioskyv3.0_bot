@@ -19,7 +19,7 @@
         .pos-btn.active-short { background: #ff3232 !important; color: #ffffff !important; font-weight: bold; }
         .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
         @keyframes pulse-glow { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
-        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #080808; }
         ::-webkit-scrollbar-thumb { background: #1a3a1a; }
     </style>
@@ -30,31 +30,30 @@
 
         <header class="relative z-10 flex items-center justify-between px-4 py-2 border-b border-[#00ff41]" style="background: #0a0a0a;">
             <div class="flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full pulse-glow" style="background: #00ff41; box-shadow: 0 0 8px #00ff41;"></div>
-                <span class="text-sm font-bold tracking-widest uppercase" style="font-family: 'Orbitron';">VISUAL CRIPTO HUB</span>
+                <div class="w-2.5 h-2.5 rounded-full pulse-glow" style="background: #00ff41; box-shadow: 0 0 8px #00ff41;"></div>
+                <span class="text-base font-bold tracking-widest uppercase" style="font-family: 'Orbitron';">VISUAL CRIPTO HUB</span>
                 
-                <!-- BOTÃO DE NAVEGAÇÃO PARA A ENGINE MULTI-ATIVOS -->
-                <a href="altcoins.html" class="text-[10px] text-[#00ff41] hover:underline bg-[#050505] px-2 py-1 rounded border border-[#00ff4140]">🔄 MULTI-ATIVOS (ETH, XAU, SOL)</a>
+                <a href="altcoins.html" class="text-xs text-[#00ff41] hover:underline bg-[#050505] px-2.5 py-1 rounded border border-[#00ff4140] font-semibold">🔄 MULTI-ATIVOS (ETH, XAU, SOL)</a>
             </div>
-            <div class="flex items-center gap-4 text-xs">
-                <span id="clock">00:00:00</span>
-                <span id="status-badge" class="px-2 py-0.5 rounded border border-[#00ff4140]" style="background: rgba(0,255,65,0.1);">● LIVE</span>
+            <div class="flex items-center gap-4 text-xs font-semibold">
+                <span id="clock" class="text-sm">00:00:00</span>
+                <span id="status-badge" class="px-2.5 py-1 rounded border border-[#00ff4140] text-xs" style="background: rgba(0,255,65,0.1);">● LIVE</span>
             </div>
         </header>
 
         <div class="relative z-10 overflow-hidden border-b border-[#111]" style="background: #080808;">
-            <div class="ticker-scroll flex whitespace-nowrap py-1.5" id="ticker-bar"></div>
+            <div class="ticker-scroll flex whitespace-nowrap py-2 text-xs font-medium" id="ticker-bar"></div>
         </div>
 
         <main class="flex-1 relative z-10 flex overflow-hidden">
             <div class="flex-1 flex flex-col">
                 <div class="flex items-center justify-between px-4 py-2 border-b border-[#111]">
                     <div class="flex items-center gap-3">
-                        <span class="text-lg font-bold" style="color: #00ff41; font-family: 'Orbitron';">BTC/USDT</span>
+                        <span class="text-xl font-bold" style="color: #00ff41; font-family: 'Orbitron';">BTC/USDT</span>
                     </div>
                     <div class="flex items-center gap-4">
-                        <span id="price-display" class="text-xl font-bold" style="font-family: 'Orbitron';">—</span>
-                        <span id="change-display" class="text-xs font-semibold px-2 py-0.5 rounded">—</span>
+                        <span id="price-display" class="text-2xl font-bold" style="font-family: 'Orbitron';">—</span>
+                        <span id="change-display" class="text-xs font-bold px-2 py-1 rounded">—</span>
                     </div>
                 </div>
 
@@ -62,52 +61,50 @@
                     <canvas id="chart-canvas"></canvas>
                 </div>
 
-                <div class="flex items-center gap-1 px-4 py-2 border-t border-[#111]">
-                    <span class="text-[10px] text-[#333] mr-2">TIMEFRAME:</span>
-                    <button class="tf-btn text-[10px] px-3 py-1 rounded active bg-[#111] text-[#555]">M30</button>
-                    <button class="tf-btn text-[10px] px-3 py-1 rounded bg-[#111] text-[#555]">H1</button>
-                    <button class="tf-btn text-[10px] px-3 py-1 rounded bg-[#111] text-[#555]">H4</button>
-                    <button class="tf-btn text-[10px] px-3 py-1 rounded bg-[#111] text-[#555]">D1</button>
+                <div class="flex items-center gap-2 px-4 py-2 border-t border-[#111]">
+                    <span class="text-xs text-[#666] font-bold mr-2">TIMEFRAME:</span>
+                    <button class="tf-btn text-xs px-3.5 py-1 rounded active bg-[#111] text-[#777]">M30</button>
+                    <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H1</button>
+                    <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H4</button>
+                    <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">D1</button>
                 </div>
             </div>
 
-            <aside class="w-72 border-l border-[#111] flex flex-col bg-[#080808] overflow-y-auto">
-                <!-- CONFIGURAÇÃO DO MOTOR (MODOS DE OPERAÇÃO) -->
-                <div class="p-3 border-b border-[#111]">
+            <aside class="w-84 border-l border-[#111] flex flex-col bg-[#080808] overflow-y-auto">
+                <!-- CONFIGURAÇÃO DO MOTOR -->
+                <div class="p-3.5 border-b border-[#111]">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] font-bold text-[#00ff41]">MODO DO MOTOR</span>
-                        <span id="engine-mode-badge" class="text-[8px] px-1.5 py-0.5 rounded bg-[#00ff4120] text-[#00ff41] font-bold">DAYTRADE</span>
+                        <span class="text-xs font-bold text-[#00ff41]">MODO DO MOTOR</span>
+                        <span id="engine-mode-badge" class="text-xs px-2 py-0.5 rounded bg-[#00ff4120] text-[#00ff41] font-bold">DAYTRADE</span>
                     </div>
 
-                    <!-- BOTÕES DE PRESET RÁPIDO -->
-                    <div class="grid grid-cols-3 gap-1 mb-2.5">
-                        <button onclick="setEngineProfile('SCALPING')" id="btn-mode-scalping" class="mode-btn text-[8px] py-1 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">⚡ 5 MIN (500)</button>
-                        <button onclick="setEngineProfile('DAYTRADE')" id="btn-mode-daytrade" class="mode-btn text-[8px] py-1 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]">🎯 10 MIN (1k)</button>
-                        <button onclick="setEngineProfile('SWING')" id="btn-mode-swing" class="mode-btn text-[8px] py-1 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">🐋 25 MIN (5k)</button>
+                    <div class="grid grid-cols-3 gap-1.5 mb-3">
+                        <button onclick="setEngineProfile('SCALPING')" id="btn-mode-scalping" class="mode-btn text-xs py-1.5 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">⚡ 5 MIN (500)</button>
+                        <button onclick="setEngineProfile('DAYTRADE')" id="btn-mode-daytrade" class="mode-btn text-xs py-1.5 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]">🎯 10 MIN (1k)</button>
+                        <button onclick="setEngineProfile('SWING')" id="btn-mode-swing" class="mode-btn text-xs py-1.5 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">🐋 25 MIN (5k)</button>
                     </div>
 
-                    <!-- CONTROLES MANUAIS EXPANDÍVEIS -->
-                    <details class="text-[8px] text-[#555]">
-                        <summary class="cursor-pointer hover:text-[#00ff41] select-none">⚙️ Ajuste Fino Manual</summary>
-                        <div class="mt-2 space-y-2 bg-[#050505] p-2 rounded border border-[#111]">
+                    <details class="text-xs text-[#777]">
+                        <summary class="cursor-pointer hover:text-[#00ff41] select-none font-semibold">⚙️ Ajuste Fino Manual</summary>
+                        <div class="mt-2 space-y-2.5 bg-[#050505] p-2.5 rounded border border-[#111]">
                             <div>
                                 <div class="flex justify-between mb-1">
                                     <span>JANELA TEMPORAL:</span>
-                                    <span id="lbl-age" class="text-[#00ff41]">600s (10m)</span>
+                                    <span id="lbl-age" class="text-[#00ff41] font-bold">600s (10m)</span>
                                 </div>
                                 <input type="range" id="cfg-age" min="30" max="1800" value="600" step="30" class="w-full accent-[#00ff41]" oninput="updateCustomEngine()">
                             </div>
                             <div>
                                 <div class="flex justify-between mb-1">
                                     <span>VOL MÍNIMO (BTC):</span>
-                                    <span id="lbl-min-vol" class="text-[#00ff41]">0.05 BTC</span>
+                                    <span id="lbl-min-vol" class="text-[#00ff41] font-bold">0.05 BTC</span>
                                 </div>
                                 <input type="range" id="cfg-min-vol" min="0.001" max="1" value="0.05" step="0.005" class="w-full accent-[#00ff41]" oninput="updateCustomEngine()">
                             </div>
                             <div>
                                 <div class="flex justify-between mb-1">
                                     <span>SINAL EXIGIDO (%):</span>
-                                    <span id="lbl-threshold" class="text-[#00ff41]">65%</span>
+                                    <span id="lbl-threshold" class="text-[#00ff41] font-bold">65%</span>
                                 </div>
                                 <input type="range" id="cfg-threshold" min="55" max="80" value="65" step="1" class="w-full accent-[#00ff41]" oninput="updateCustomEngine()">
                             </div>
@@ -115,66 +112,66 @@
                     </details>
                 </div>
 
-                <!-- ORDER BOOK (REAL-TIME BINANCE WS) -->
-                <div class="p-3 border-b border-[#111]">
+                <!-- ORDER BOOK -->
+                <div class="p-3.5 border-b border-[#111]">
                     <div class="flex justify-between items-center mb-2">
-                        <div class="text-[10px] font-bold text-[#00ff41]">ORDER BOOK (REAL-TIME)</div>
-                        <span class="text-[8px] text-[#00ff4188]">● BINANCE WS</span>
+                        <div class="text-xs font-bold text-[#00ff41]">ORDER BOOK (REAL-TIME)</div>
+                        <span class="text-[10px] text-[#00ff4188]">● BINANCE WS</span>
                     </div>
-                    <div id="orderbook" class="space-y-0.5 font-mono text-[10px]">
-                        <div class="text-[9px] text-[#555] text-center py-2">Conectando ao Livro...</div>
+                    <div id="orderbook" class="space-y-1 font-mono text-xs">
+                        <div class="text-xs text-[#555] text-center py-2">Conectando ao Livro...</div>
                     </div>
                 </div>
 
                 <!-- ANÁLISE DE PRESSÃO & CRONÓMETRO -->
-                <div class="p-3 border-b border-[#111]">
-                    <div class="text-[10px] font-bold mb-2 text-[#00ff41]">PRESSÃO DE MERCADO</div>
+                <div class="p-3.5 border-b border-[#111]">
+                    <div class="text-xs font-bold mb-2 text-[#00ff41]">PRESSÃO DE MERCADO</div>
                     <div id="signal-panel" class="p-3 rounded bg-[#0a0a0a] border border-[#111]">
-                        <div class="text-[9px] text-[#555] text-center">Aguardando fluxo de ordens...</div>
+                        <div class="text-xs text-[#555] text-center">Aguardando fluxo de ordens...</div>
                     </div>
                 </div>
 
                 <!-- CALCULADORA DE STOP LOSS & TAKE PROFIT -->
-                <div class="p-3">
-                    <div class="text-[10px] font-bold mb-2 text-[#00ff41]">CALCULADORA DE SL / TP</div>
-                    <div class="p-3 rounded bg-[#0a0a0a] border border-[#111] space-y-2.5">
-                        <div class="flex gap-1">
-                            <button id="btn-long" onclick="setPosType('LONG')" class="pos-btn active-long flex-1 text-[9px] py-1 rounded border border-[#00ff41]">LONG</button>
-                            <button id="btn-short" onclick="setPosType('SHORT')" class="pos-btn flex-1 text-[9px] py-1 rounded border border-[#333] text-[#555]">SHORT</button>
+                <div class="p-3.5">
+                    <div class="text-xs font-bold mb-2 text-[#00ff41]">CALCULADORA DE SL / TP</div>
+                    <div class="p-3 rounded bg-[#0a0a0a] border border-[#111] space-y-3">
+                        <div class="flex gap-1.5">
+                            <button id="btn-long" onclick="setPosType('LONG')" class="pos-btn active-long flex-1 text-xs py-1.5 rounded border border-[#00ff41]">LONG</button>
+                            <button id="btn-short" onclick="setPosType('SHORT')" class="pos-btn flex-1 text-xs py-1.5 rounded border border-[#333] text-[#666]">SHORT</button>
                         </div>
 
                         <div>
                             <div class="flex justify-between items-center mb-1">
-                                <label class="text-[8px] text-[#777]">ENTRADA ($)</label>
-                                <button onclick="useCurrentPrice()" class="text-[8px] text-[#00ff41] hover:underline">[ATUAL]</button>
+                                <label class="text-xs text-[#777]">ENTRADA ($)</label>
+                                <button onclick="useCurrentPrice()" class="text-xs text-[#00ff41] hover:underline font-bold">[ATUAL]</button>
                             </div>
-                            <input type="number" id="calc-entry" step="0.1" class="w-full bg-[#050505] border border-[#222] text-[#00ff41] text-[10px] px-2 py-1 rounded focus:outline-none focus:border-[#00ff41]" oninput="calculateRiskReward()">
+                            <input type="number" id="calc-entry" step="0.1" class="w-full bg-[#050505] border border-[#222] text-[#00ff41] text-xs px-2.5 py-1.5 rounded focus:outline-none focus:border-[#00ff41] font-bold" oninput="calculateRiskReward()">
                         </div>
 
                         <div>
-                            <label class="text-[8px] text-[#777] block mb-1">CAPITAL ($)</label>
-                            <input type="number" id="calc-capital" value="1000" step="10" class="w-full bg-[#050505] border border-[#222] text-white text-[10px] px-2 py-1 rounded focus:outline-none focus:border-[#00ff41]" oninput="calculateRiskReward()">
+                            <label class="text-xs text-[#777] block mb-1">CAPITAL ($)</label>
+                            <input type="number" id="calc-capital" value="1000" step="10" class="w-full bg-[#050505] border border-[#222] text-white text-xs px-2.5 py-1.5 rounded focus:outline-none focus:border-[#00ff41] font-bold" oninput="calculateRiskReward()">
                         </div>
 
                         <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <label class="text-[8px] text-[#ff3232] block mb-1">STOP LOSS (%)</label>
-                                <input type="number" id="calc-sl-pct" value="1.5" step="0.1" class="w-full bg-[#050505] border border-[#ff323240] text-[#ff3232] text-[10px] px-2 py-1 rounded focus:outline-none focus:border-[#ff3232]" oninput="calculateRiskReward()">
+                                <label class="text-xs text-[#ff3232] block mb-1">STOP LOSS (%)</label>
+                                <input type="number" id="calc-sl-pct" value="1.5" step="0.1" class="w-full bg-[#050505] border border-[#ff323240] text-[#ff3232] text-xs px-2 py-1.5 rounded focus:outline-none focus:border-[#ff3232] font-bold" oninput="calculateRiskReward()">
                             </div>
                             <div>
-                                <label class="text-[8px] text-[#00ff41] block mb-1">TAKE PROFIT (%)</label>
-                                <input type="number" id="calc-tp-pct" value="3.0" step="0.1" class="w-full bg-[#050505] border border-[#00ff4140] text-[#00ff41] text-[10px] px-2 py-1 rounded focus:outline-none focus:border-[#00ff41]" oninput="calculateRiskReward()">
+                                <label class="text-xs text-[#00ff41] block mb-1">TAKE PROFIT (%)</label>
+                                <input type="number" id="calc-tp-pct" value="3.0" step="0.1" class="w-full bg-[#050505] border border-[#00ff4140] text-[#00ff41] text-xs px-2 py-1.5 rounded focus:outline-none focus:border-[#00ff41] font-bold" oninput="calculateRiskReward()">
                             </div>
                         </div>
 
-                        <div class="pt-2 border-t border-[#111] space-y-1.5 text-[9px]">
+                        <div class="pt-2 border-t border-[#111] space-y-2 text-xs">
                             <div class="flex justify-between">
                                 <span class="text-[#777]">PREÇO STOP:</span>
                                 <span id="res-sl-price" class="text-[#ff3232] font-bold">—</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-[#777]">PERDA ESTIMADA:</span>
-                                <span id="res-sl-val" class="text-[#ff3232]">—</span>
+                                <span id="res-sl-val" class="text-[#ff3232] font-semibold">—</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-[#777]">PREÇO TARGET:</span>
@@ -182,7 +179,7 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-[#777]">LUCRO ESTIMADO:</span>
-                                <span id="res-tp-val" class="text-[#00ff41]">—</span>
+                                <span id="res-tp-val" class="text-[#00ff41] font-semibold">—</span>
                             </div>
                             <div class="flex justify-between pt-1 border-t border-[#111]">
                                 <span class="text-[#777]">RISCO : RETORNO:</span>
@@ -193,8 +190,18 @@
                 </div>
             </aside>
         </main>
+
+        <div class="relative z-10 border-t border-[#111] bg-[#080808]" style="height: 180px;">
+            <div class="p-2 border-b border-[#111] flex justify-between items-center bg-[#0a0a0a]">
+                <div class="text-xs font-bold text-[#00ff41]">📰 NEWS FEED (COINTELEGRAPH BR)</div>
+            </div>
+            <div id="news-container" class="overflow-y-auto h-[140px] p-2">
+                <div class="text-xs text-center py-4 text-[#444]">SYNCING DATA...</div>
+            </div>
+        </div>
+
         <footer class="relative z-10 text-center py-1 border-t border-[#111] bg-[#080808]">
-            <span class="text-[9px] text-[#1a3a1a]">© 2026 Visual Studio | Kovaliosky DeV</span>
+            <span class="text-xs text-[#1a3a1a]">© 2026 Visual Studio | Kovaliosky DeV</span>
         </footer>
     </div>
 
@@ -209,37 +216,34 @@
         const canvas = document.getElementById('chart-canvas');
         const ctx = canvas.getContext('2d');
 
-        // --- PERFIS DO MOTOR RECONFIGURADOS ---
         const ENGINE_PROFILES = {
             SCALPING: {
                 name: "RÁPIDO (5 MIN)",
                 minOrderQtyBTC: 0.01,
-                maxOrderAgeSeconds: 300,  // 5 minutos
+                maxOrderAgeSeconds: 300,
                 signalThresholdPct: 60,
-                maxOrders: 500            // 500 ordens
+                maxOrders: 500
             },
             DAYTRADE: {
                 name: "NORMAL (10 MIN)",
                 minOrderQtyBTC: 0.05,
-                maxOrderAgeSeconds: 600,  // 10 minutos
+                maxOrderAgeSeconds: 600,
                 signalThresholdPct: 65,
-                maxOrders: 1000           // 1000 ordens
+                maxOrders: 1000
             },
             SWING: {
                 name: "LONGO (25 MIN)",
                 minOrderQtyBTC: 0.25,
-                maxOrderAgeSeconds: 1500, // 25 minutos
+                maxOrderAgeSeconds: 1500,
                 signalThresholdPct: 70,
-                maxOrders: 5000           // 5000 ordens
+                maxOrders: 5000
             }
         };
 
-        // Estado atual (Inicia no modo Normal / Day Trade)
         let currentEngineConfig = { ...ENGINE_PROFILES.DAYTRADE };
         let orderBuffer = [];
 
-        // --- CRONÓMETRO E HISTÓRICO DE PRESSÃO ---
-        let currentPressureState = 'NEUTRAL'; // 'BUY', 'SELL' ou 'NEUTRAL'
+        let currentPressureState = 'NEUTRAL';
         let pressureStartTime = Date.now();
         let pressureHistory = [];
 
@@ -247,513 +251,11 @@
             const totalSecs = Math.floor(ms / 1000);
             const mins = Math.floor(totalSecs / 60);
             const secs = totalSecs % 60;
-            if (mins > 0) return `${mins}m ${secs}s`;
+            if (mins > 0) return `${mins}m${secs}s`;
             return `${secs}s`;
         }
 
         function formatTimeLabel(seconds) {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
-            if (mins > 0 && secs === 0) return `${seconds}s (${mins}m)`;
-            if (mins > 0) return `${seconds}s (${mins}m ${secs}s)`;
-            return `${seconds}s`;
-        }
-
-        function setEngineProfile(profileKey) {
-            if (!ENGINE_PROFILES[profileKey]) return;
-            
-            currentEngineConfig = { ...ENGINE_PROFILES[profileKey] };
-
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.className = "mode-btn text-[8px] py-1 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]";
-            });
-
-            const activeBtn = document.getElementById(`btn-mode-${profileKey.toLowerCase()}`);
-            if (activeBtn) {
-                activeBtn.className = "mode-btn text-[8px] py-1 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]";
-            }
-
-            const badge = document.getElementById('engine-mode-badge');
-            if (badge) badge.textContent = profileKey;
-
-            document.getElementById('cfg-age').value = currentEngineConfig.maxOrderAgeSeconds;
-            document.getElementById('cfg-min-vol').value = currentEngineConfig.minOrderQtyBTC;
-            document.getElementById('cfg-threshold').value = currentEngineConfig.signalThresholdPct;
-
-            document.getElementById('lbl-age').textContent = formatTimeLabel(currentEngineConfig.maxOrderAgeSeconds);
-            document.getElementById('lbl-min-vol').textContent = `${currentEngineConfig.minOrderQtyBTC} BTC`;
-            document.getElementById('lbl-threshold').textContent = `${currentEngineConfig.signalThresholdPct}%`;
-
-            analyzeEngineWithFilters();
-        }
-
-        function updateCustomEngine() {
-            currentEngineConfig.maxOrderAgeSeconds = parseFloat(document.getElementById('cfg-age').value);
-            currentEngineConfig.minOrderQtyBTC = parseFloat(document.getElementById('cfg-min-vol').value);
-            currentEngineConfig.signalThresholdPct = parseFloat(document.getElementById('cfg-threshold').value);
-
-            document.getElementById('lbl-age').textContent = formatTimeLabel(currentEngineConfig.maxOrderAgeSeconds);
-            document.getElementById('lbl-min-vol').textContent = `${currentEngineConfig.minOrderQtyBTC} BTC`;
-            document.getElementById('lbl-threshold').textContent = `${currentEngineConfig.signalThresholdPct}%`;
-
-            const badge = document.getElementById('engine-mode-badge');
-            if (badge) badge.textContent = "CUSTOM";
-
-            analyzeEngineWithFilters();
-        }
-
-        function updateClock() {
-            document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
-        }
-
-        async function fetchCandles(interval = '30m') {
-            try {
-                const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=80`);
-                const data = await res.json();
-                priceData = data.map(c => ({
-                    time: c[0], 
-                    open: parseFloat(c[1]), 
-                    high: parseFloat(c[2]), 
-                    low: parseFloat(c[3]), 
-                    close: parseFloat(c[4]),
-                    volume: parseFloat(c[5])
-                }));
-                
-                const entryInput = document.getElementById('calc-entry');
-                if (entryInput && !entryInput.value && priceData.length > 0) {
-                    entryInput.value = priceData[priceData.length - 1].close.toFixed(1);
-                }
-                
-                calculateRiskReward();
-                renderAll();
-            } catch (e) { console.error("API Error", e); }
-        }
-
-        function initKlineWS() {
-            if (klineWs) klineWs.close();
-            const interval = timeframeMap[currentTimeframe];
-            klineWs = new WebSocket(`wss://stream.binance.com:9443/ws/btcusdt@kline_${interval}`);
-            
-            klineWs.onmessage = (e) => {
-                const msg = JSON.parse(e.data);
-                const k = msg.k;
-                const newCandle = { 
-                    time: k.t, 
-                    open: parseFloat(k.o), 
-                    high: parseFloat(k.h), 
-                    low: parseFloat(k.l), 
-                    close: parseFloat(k.c),
-                    volume: parseFloat(k.v)
-                };
-                
-                if (priceData.length > 0 && priceData[priceData.length - 1].time === k.t) {
-                    priceData[priceData.length - 1] = newCandle;
-                } else {
-                    priceData.push(newCandle);
-                    priceData.shift();
-                }
-                renderAll();
-            };
-            document.getElementById('status-badge').textContent = `● LIVE ${currentTimeframe}`;
-        }
-
-        function initDepthWS() {
-            if (depthWs) depthWs.close();
-            depthWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@depth10@1000ms');
-
-            depthWs.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                if (data.bids && data.asks) {
-                    renderRealOrderBook(data.bids, data.asks);
-                }
-            };
-        }
-
-        function initTradeWS() {
-            if (tradeWs) tradeWs.close();
-            tradeWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
-
-            tradeWs.onmessage = (e) => {
-                const trade = JSON.parse(e.data);
-                processMarketTrade(trade);
-            };
-        }
-
-        function processMarketTrade(trade) {
-            const tradePrice = parseFloat(trade.p);
-            const tradeQty = parseFloat(trade.q);
-            const tradeTime = trade.T;
-            const isSell = trade.m;
-
-            if (tradeQty < currentEngineConfig.minOrderQtyBTC) return;
-
-            orderBuffer.push({
-                price: tradePrice,
-                qty: tradeQty,
-                isSell: isSell,
-                time: tradeTime
-            });
-
-            if (orderBuffer.length > currentEngineConfig.maxOrders) {
-                orderBuffer.shift();
-            }
-
-            analyzeEngineWithFilters();
-        }
-
-        function analyzeEngineWithFilters() {
-            const now = Date.now();
-
-            orderBuffer = orderBuffer.filter(order => {
-                const ageInSeconds = (now - order.time) / 1000;
-                return ageInSeconds <= currentEngineConfig.maxOrderAgeSeconds;
-            });
-
-            if (orderBuffer.length === 0) {
-                const container = document.getElementById('signal-panel');
-                if (container) {
-                    container.innerHTML = `<div class="text-[8px] text-[#555] text-center">Nenhuma ordem dentro dos critérios atuais (${currentEngineConfig.minOrderQtyBTC} BTC / ${formatTimeLabel(currentEngineConfig.maxOrderAgeSeconds)})</div>`;
-                }
-                return;
-            }
-
-            let buyVolume = 0, sellVolume = 0, buyCount = 0, sellCount = 0;
-            let buyOrders = [], sellOrders = [];
-
-            orderBuffer.forEach(order => {
-                if (order.isSell) {
-                    sellVolume += order.qty;
-                    sellCount++;
-                    sellOrders.push(order);
-                } else {
-                    buyVolume += order.qty;
-                    buyCount++;
-                    buyOrders.push(order);
-                }
-            });
-
-            const totalVolume = buyVolume + sellVolume;
-            const buyPct = totalVolume > 0 ? ((buyVolume / totalVolume) * 100).toFixed(1) : "50.0";
-            const sellPct = totalVolume > 0 ? ((sellVolume / totalVolume) * 100).toFixed(1) : "50.0";
-
-            buyOrders.sort((a, b) => b.qty - a.qty);
-            sellOrders.sort((a, b) => b.qty - a.qty);
-
-            renderFilteredPressurePanel(buyPct, sellPct, buyVolume, sellVolume, buyCount, sellCount, buyOrders[0], sellOrders[0]);
-        }
-
-        function renderFilteredPressurePanel(buyPct, sellPct, buyVol, sellVol, buyCnt, sellCnt, topBuy, topSell) {
-            const container = document.getElementById('signal-panel');
-            if (!container) return;
-
-            const bPct = parseFloat(buyPct);
-            const sPct = parseFloat(sellPct);
-
-            // 1. Determinar Estado da Pressão
-            let newState = 'NEUTRAL';
-            let statusText = "MERCADO EQUILIBRADO";
-            let statusColor = "#ffaa00";
-
-            if (bPct >= currentEngineConfig.signalThresholdPct) {
-                newState = 'BUY';
-                statusText = `FORTE PRESSÃO COMPRADORA (${bPct}%)`;
-                statusColor = "#00ff41";
-            } else if (sPct >= currentEngineConfig.signalThresholdPct) {
-                newState = 'SELL';
-                statusText = `FORTE PRESSÃO VENDEDORA (${sPct}%)`;
-                statusColor = "#ff3232";
-            }
-
-            // 2. Deteção de Mudança de Estado e Registo do Histórico
-            if (newState !== currentPressureState) {
-                const lastDurationMs = Date.now() - pressureStartTime;
-
-                if (currentPressureState !== 'NEUTRAL' && lastDurationMs > 3000) {
-                    pressureHistory.unshift({
-                        type: currentPressureState,
-                        duration: formatDuration(lastDurationMs),
-                        pct: currentPressureState === 'BUY' ? bPct : sPct,
-                        time: new Date().toLocaleTimeString('pt-BR')
-                    });
-                    if (pressureHistory.length > 3) pressureHistory.pop();
-                }
-
-                currentPressureState = newState;
-                pressureStartTime = Date.now();
-            }
-
-            // 3. Duração Atual
-            const elapsedMs = Date.now() - pressureStartTime;
-            const durationText = formatDuration(elapsedMs);
-
-            // 4. Renderizar Histórico se Existir
-            let historyHtml = '';
-            if (pressureHistory.length > 0) {
-                historyHtml = `
-                    <div class="mt-2 pt-2 border-t border-[#111]">
-                        <div class="text-[7px] text-[#555] font-bold mb-1 uppercase">Últimos Impulsos Registados</div>
-                        <div class="space-y-1">
-                            ${pressureHistory.map(h => `
-                                <div class="flex justify-between text-[7px] ${h.type === 'BUY' ? 'text-[#00ff4188]' : 'text-[#ff323288]'}">
-                                    <span>${h.type === 'BUY' ? '🟢 COMPRA' : '🔴 VENDA'} (${h.duration})</span>
-                                    <span>${h.time}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            container.innerHTML = `
-                <div class="text-[9px] font-bold mb-1" style="color: ${statusColor}">
-                    ${statusText}
-                </div>
-
-                <!-- CRONÓMETRO DE DURAÇÃO -->
-                <div class="flex items-center gap-1.5 text-[8px] text-gray-300 mb-2">
-                    <span class="text-[#777]">⏱️ DURAÇÃO:</span>
-                    <span class="font-bold text-white bg-[#111] px-1.5 py-0.5 rounded border border-[#222]">
-                        ${durationText}
-                    </span>
-                    ${currentPressureState !== 'NEUTRAL' ? '<span class="text-[7px] text-[#00ff41] animate-pulse">● ATIVO</span>' : ''}
-                </div>
-
-                <div class="w-full h-3 bg-[#111] rounded overflow-hidden flex my-1 border border-[#222]">
-                    <div style="width: ${buyPct}%; background: #00ff41;" class="h-full flex items-center justify-center text-[7px] text-black font-bold">
-                        ${buyPct}%
-                    </div>
-                    <div style="width: ${sellPct}%; background: #ff3232;" class="h-full flex items-center justify-center text-[7px] text-white font-bold">
-                        ${sellPct}%
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 text-[8px] my-2 text-gray-400">
-                    <div>
-                        <span class="text-[#00ff41] font-bold">COMPRAS:</span> ${buyCnt} ordens<br>
-                        <span>VOL: ${buyVol.toFixed(3)} BTC</span>
-                    </div>
-                    <div>
-                        <span class="text-[#ff3232] font-bold">VENDAS:</span> ${sellCnt} ordens<br>
-                        <span>VOL: ${sellVol.toFixed(3)} BTC</span>
-                    </div>
-                </div>
-
-                <div class="pt-2 border-t border-[#111]">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-[8px] text-[#777] font-bold">MAIORES ORDENS (TOP BALEIAS)</span>
-                        <span class="text-[7px] text-[#00ff41]">> ${currentEngineConfig.minOrderQtyBTC} BTC</span>
-                    </div>
-                    <div class="text-[8px] space-y-1">
-                        <div class="text-[#00ff41]">
-                            🟢 Compra: $${topBuy ? topBuy.price.toFixed(1) : '—'} (${topBuy ? topBuy.qty.toFixed(3) : '0'} BTC)
-                        </div>
-                        <div class="text-[#ff3232]">
-                            🔴 Venda: $${topSell ? topSell.price.toFixed(1) : '—'} (${topSell ? topSell.qty.toFixed(3) : '0'} BTC)
-                        </div>
-                    </div>
-                </div>
-
-                ${historyHtml}
-            `;
-        }
-
-        function renderRealOrderBook(bids, asks) {
-            const container = document.getElementById('orderbook');
-            if (!container) return;
-
-            const topAsks = asks.slice(0, 5).reverse();
-            const topBids = bids.slice(0, 5);
-
-            let html = `
-                <div class="flex justify-between text-[8px] text-[#555] mb-1 px-1">
-                    <span>PREÇO (USDT)</span>
-                    <span>QTD (BTC)</span>
-                </div>
-            `;
-
-            topAsks.forEach(ask => {
-                const p = parseFloat(ask[0]).toFixed(1);
-                const q = parseFloat(ask[1]).toFixed(3);
-                html += `
-                    <div class="flex justify-between text-[#ff3232] hover:bg-[#ff323210] px-1 py-0.5 rounded transition-colors">
-                        <span>${p}</span>
-                        <span>${q}</span>
-                    </div>
-                `;
-            });
-
-            html += `<div class="my-1 border-b border-[#222]"></div>`;
-
-            topBids.forEach(bid => {
-                const p = parseFloat(bid[0]).toFixed(1);
-                const q = parseFloat(bid[1]).toFixed(3);
-                html += `
-                    <div class="flex justify-between text-[#00ff41] hover:bg-[#00ff4110] px-1 py-0.5 rounded transition-colors">
-                        <span>${p}</span>
-                        <span>${q}</span>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function renderAll() {
-            if (priceData.length === 0) return;
-            const w = canvas.width = canvas.parentElement.clientWidth;
-            const h = canvas.height = canvas.parentElement.clientHeight;
-            ctx.clearRect(0, 0, w, h);
-
-            const pad = { t: 30, b: 30, r: 60, l: 10 };
-            const drawW = w - pad.l - pad.r, drawH = h - pad.t - pad.b;
-            const maxP = Math.max(...priceData.map(d => d.high)), minP = Math.min(...priceData.map(d => d.low));
-            const range = maxP - minP || 1;
-            const getY = (p) => pad.t + drawH - ((p - minP) / range) * drawH;
-
-            const candleW = (drawW / priceData.length) * 0.8;
-            priceData.forEach((d, i) => {
-                const x = pad.l + (i * (drawW / priceData.length)) + (drawW / priceData.length / 2);
-                const color = d.close >= d.open ? '#00ff41' : '#ff3232';
-                ctx.strokeStyle = color; ctx.fillStyle = color;
-                
-                ctx.beginPath(); ctx.moveTo(x, getY(d.high)); ctx.lineTo(x, getY(d.low)); ctx.stroke();
-                
-                const y1 = getY(d.open), y2 = getY(d.close);
-                ctx.fillRect(x - candleW/2, Math.min(y1, y2), candleW, Math.max(1, Math.abs(y1 - y2)));
-            });
-
-            const last = priceData[priceData.length - 1];
-            document.getElementById('price-display').textContent = `$${last.close.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            const change = ((last.close - priceData[0].close) / priceData[0].close * 100).toFixed(2);
-            document.getElementById('change-display').textContent = `${change}%`;
-            document.getElementById('change-display').style.color = change >= 0 ? '#00ff41' : '#ff3232';
-        }
-
-        function setPosType(type) {
-            posType = type;
-            const btnLong = document.getElementById('btn-long');
-            const btnShort = document.getElementById('btn-short');
-
-            if (type === 'LONG') {
-                btnLong.className = "pos-btn active-long flex-1 text-[9px] py-1 rounded border border-[#00ff41]";
-                btnShort.className = "pos-btn flex-1 text-[9px] py-1 rounded border border-[#333] text-[#555]";
-            } else {
-                btnShort.className = "pos-btn active-short flex-1 text-[9px] py-1 rounded border border-[#ff3232]";
-                btnLong.className = "pos-btn flex-1 text-[9px] py-1 rounded border border-[#333] text-[#555]";
-            }
-            calculateRiskReward();
-        }
-
-        function useCurrentPrice() {
-            if (priceData.length > 0) {
-                const currentPrice = priceData[priceData.length - 1].close;
-                document.getElementById('calc-entry').value = currentPrice.toFixed(1);
-                calculateRiskReward();
-            }
-        }
-
-        function calculateRiskReward() {
-            const entryInput = document.getElementById('calc-entry');
-            const capitalInput = document.getElementById('calc-capital');
-            const slPctInput = document.getElementById('calc-sl-pct');
-            const tpPctInput = document.getElementById('calc-tp-pct');
-
-            if (!entryInput || !capitalInput || !slPctInput || !tpPctInput) return;
-
-            const entry = parseFloat(entryInput.value);
-            const capital = parseFloat(capitalInput.value) || 0;
-            const slPct = parseFloat(slPctInput.value) || 0;
-            const tpPct = parseFloat(tpPctInput.value) || 0;
-
-            if (!entry || entry <= 0) {
-                document.getElementById('res-sl-price').textContent = "—";
-                document.getElementById('res-sl-val').textContent = "—";
-                document.getElementById('res-tp-price').textContent = "—";
-                document.getElementById('res-tp-val').textContent = "—";
-                document.getElementById('res-rr').textContent = "—";
-                return;
-            }
-
-            let slPrice, tpPrice, lossVal, profitVal;
-
-            if (posType === 'LONG') {
-                slPrice = entry * (1 - (slPct / 100));
-                tpPrice = entry * (1 + (tpPct / 100));
-            } else {
-                slPrice = entry * (1 + (slPct / 100));
-                tpPrice = entry * (1 - (tpPct / 100));
-            }
-
-            lossVal = capital * (slPct / 100);
-            profitVal = capital * (tpPct / 100);
-            const rrRatio = slPct > 0 ? (tpPct / slPct).toFixed(2) : "0.00";
-
-            document.getElementById('res-sl-price').textContent = `$${slPrice.toFixed(1)}`;
-            document.getElementById('res-sl-val').textContent = `-$${lossVal.toFixed(2)} (${slPct}%)`;
-            document.getElementById('res-tp-price').textContent = `$${tpPrice.toFixed(1)}`;
-            document.getElementById('res-tp-val').textContent = `+$${profitVal.toFixed(2)} (${tpPct}%)`;
-            document.getElementById('res-rr').textContent = `1 : ${rrRatio}`;
-        }
-
-        async function fetchNews() {
-            const container = document.getElementById('news-container');
-            try {
-                const rss = 'https://br.cointelegraph.com/rss';
-                const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rss)}`;
-                const res = await fetch(api);
-                const data = await res.json();
-                
-                if (data.status === 'ok') {
-                    container.innerHTML = data.items.map(item => `
-                        <div class="mb-2 pb-2 border-b border-[#111] hover:bg-[#ffffff05] cursor-pointer" onclick="window.open('${item.link}', '_blank')">
-                            <div class="text-[10px] font-bold text-gray-300 leading-tight">${item.title}</div>
-                            <div class="text-[8px] text-[#333] mt-1">${new Date(item.pubDate).toLocaleTimeString()} - ${item.author || 'COINTELEGRAPH'}</div>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) { console.error("News Error"); }
-        }
-
-        async function initTicker() {
-            try {
-                const res = await fetch('https://api.binance.com/api/v3/ticker/24h');
-                const data = await res.json();
-                const coins = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT'];
-                const filtered = data.filter(d => coins.includes(d.symbol));
-                document.getElementById('ticker-bar').innerHTML = [...filtered, ...filtered].map(d => `
-                    <div class="inline-flex items-center gap-2 px-6">
-                        <span class="text-[#444] text-[10px]">${d.symbol.replace('USDT', '')}</span>
-                        <span class="text-white text-[10px]">$${parseFloat(d.lastPrice).toFixed(2)}</span>
-                        <span class="${d.priceChangePercent >= 0 ? 'text-[#00ff41]' : 'text-[#ff3232]'} text-[9px]">${d.priceChangePercent}%</span>
-                    </div>
-                `).join('');
-            } catch (e) {}
-        }
-
-        document.querySelectorAll('.tf-btn').forEach(btn => {
-            btn.onclick = async () => {
-                document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                currentTimeframe = btn.textContent;
-                priceData = [];
-                await fetchCandles(timeframeMap[currentTimeframe]);
-                initKlineWS();
-            };
-        });
-
-        window.onload = () => {
-            setInterval(updateClock, 1000);
-            fetchCandles('30m');
-            initKlineWS();
-            initDepthWS();
-            initTradeWS();
-            fetchNews();
-            initTicker();
-            setInterval(fetchNews, 300000);
-            setInterval(initTicker, 60000);
-        };
-        window.onresize = renderAll;
-    </script>
-</body>
-</html>
+            if (mins > 0 && secs === 0) return `${seconds
