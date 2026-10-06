@@ -17,6 +17,7 @@
         .tf-btn.active { background: #00ff41 !important; color: #050505 !important; font-weight: bold; }
         .pos-btn.active-long { background: #00ff41 !important; color: #050505 !important; font-weight: bold; }
         .pos-btn.active-short { background: #ff3232 !important; color: #ffffff !important; font-weight: bold; }
+        .tab-btn.active-tab { background: #00ff41 !important; color: #050505 !important; font-weight: bold; }
         .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
         @keyframes pulse-glow { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
         ::-webkit-scrollbar { width: 5px; }
@@ -71,7 +72,7 @@
             </div>
 
             <aside class="w-84 border-l border-[#111] flex flex-col bg-[#080808] overflow-y-auto">
-                <!-- CONFIGURAÇÃO DO MOTOR -->
+                <!-- MODO DO MOTOR -->
                 <div class="p-3.5 border-b border-[#111]">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs font-bold text-[#00ff41]">MODO DO MOTOR</span>
@@ -110,6 +111,29 @@
                             </div>
                         </div>
                     </details>
+                </div>
+
+                <!-- PAINEL DE ANÁLISE DE ROMPIMENTOS -->
+                <div class="p-3.5 border-b border-[#111]">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-[#00ff41]">ANÁLISE DE ROMPIMENTOS</span>
+                        <span id="trap-window-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-[#00ff4120] text-[#00ff41] font-bold">JANELA: 10M</span>
+                    </div>
+
+                    <div class="flex gap-1 mb-2">
+                        <button onclick="setBreakoutTab('TRAPS')" id="tab-btn-traps" class="tab-btn active-tab flex-1 text-[10px] py-1 rounded border border-[#00ff41]">⚠️ FALSOS (TRAPS)</button>
+                        <button onclick="setBreakoutTab('REAL')" id="tab-btn-real" class="tab-btn flex-1 text-[10px] py-1 rounded border border-[#333] text-[#777]">🚀 REAIS (CONFIRMADUS)</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-1.5 mb-2.5">
+                        <button onclick="setTrapWindow(10)" id="btn-trap-10" class="trap-btn text-xs py-1 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]">10 MIN</button>
+                        <button onclick="setTrapWindow(25)" id="btn-trap-25" class="trap-btn text-xs py-1 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">25 MIN</button>
+                        <button onclick="setTrapWindow(30)" id="btn-trap-30" class="trap-btn text-xs py-1 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">30 MIN</button>
+                    </div>
+
+                    <div id="trap-stats-panel" class="p-2.5 rounded bg-[#0a0a0a] border border-[#111]">
+                        <div class="text-xs text-[#555] text-center">Monitorizando níveis de preço...</div>
+                    </div>
                 </div>
 
                 <!-- ORDER BOOK -->
@@ -217,27 +241,9 @@
         const ctx = canvas.getContext('2d');
 
         const ENGINE_PROFILES = {
-            SCALPING: {
-                name: "RÁPIDO (5 MIN)",
-                minOrderQtyBTC: 0.01,
-                maxOrderAgeSeconds: 300,
-                signalThresholdPct: 60,
-                maxOrders: 500
-            },
-            DAYTRADE: {
-                name: "NORMAL (10 MIN)",
-                minOrderQtyBTC: 0.05,
-                maxOrderAgeSeconds: 600,
-                signalThresholdPct: 65,
-                maxOrders: 1000
-            },
-            SWING: {
-                name: "LONGO (25 MIN)",
-                minOrderQtyBTC: 0.25,
-                maxOrderAgeSeconds: 1500,
-                signalThresholdPct: 70,
-                maxOrders: 5000
-            }
+            SCALPING: { name: "RÁPIDO (5 MIN)", minOrderQtyBTC: 0.01, maxOrderAgeSeconds: 300, signalThresholdPct: 60, maxOrders: 500 },
+            DAYTRADE: { name: "NORMAL (10 MIN)", minOrderQtyBTC: 0.05, maxOrderAgeSeconds: 600, signalThresholdPct: 65, maxOrders: 1000 },
+            SWING: { name: "LONGO (25 MIN)", minOrderQtyBTC: 0.25, maxOrderAgeSeconds: 1500, signalThresholdPct: 70, maxOrders: 5000 }
         };
 
         let currentEngineConfig = { ...ENGINE_PROFILES.DAYTRADE };
@@ -246,6 +252,204 @@
         let currentPressureState = 'NEUTRAL';
         let pressureStartTime = Date.now();
         let pressureHistory = [];
+
+        // --- SISTEMA DE DETEÇÃO E ANOTAÇÃO VISUAL DE ROMPIMENTOS ---
+        let falseBreakoutsList = [];
+        let realBreakoutsList = [];
+        let activeBreakout = null;
+        let falseBreakoutWindowMins = 10;
+        let currentBreakoutTab = 'TRAPS';
+
+        function setBreakoutTab(tab) {
+            currentBreakoutTab = tab;
+            const btnTraps = document.getElementById('tab-btn-traps');
+            const btnReal = document.getElementById('tab-btn-real');
+
+            if (tab === 'TRAPS') {
+                btnTraps.className = "tab-btn active-tab flex-1 text-[10px] py-1 rounded border border-[#00ff41]";
+                btnReal.className = "tab-btn flex-1 text-[10px] py-1 rounded border border-[#333] text-[#777]";
+            } else {
+                btnReal.className = "tab-btn active-tab flex-1 text-[10px] py-1 rounded border border-[#00ff41]";
+                btnTraps.className = "tab-btn flex-1 text-[10px] py-1 rounded border border-[#333] text-[#777]";
+            }
+            renderTrapStats();
+        }
+
+        function setTrapWindow(mins) {
+            falseBreakoutWindowMins = mins;
+
+            document.querySelectorAll('.trap-btn').forEach(btn => {
+                btn.className = "trap-btn text-xs py-1 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]";
+            });
+
+            const activeBtn = document.getElementById(`btn-trap-${mins}`);
+            if (activeBtn) {
+                activeBtn.className = "trap-btn text-xs py-1 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]";
+            }
+
+            document.getElementById('trap-window-badge').textContent = `JANELA: ${mins}M`;
+            renderTrapStats();
+        }
+
+        function detectBreakouts(tradePrice) {
+            if (priceData.length < 10) return;
+
+            const recentCandles = priceData.slice(-20);
+            const localHigh = Math.max(...recentCandles.map(c => c.high));
+            const localLow = Math.min(...recentCandles.map(c => c.low));
+            const now = Date.now();
+            const currentCandleIndex = priceData.length - 1;
+
+            if (!activeBreakout) {
+                if (tradePrice > localHigh) {
+                    activeBreakout = { type: 'BULL', level: localHigh, peak: tradePrice, time: now, candleIndex: currentCandleIndex };
+                } else if (tradePrice < localLow) {
+                    activeBreakout = { type: 'BEAR', level: localLow, bottom: tradePrice, time: now, candleIndex: currentCandleIndex };
+                }
+            } else {
+                const elapsedSecs = (now - activeBreakout.time) / 1000;
+
+                if (activeBreakout.type === 'BULL') {
+                    if (tradePrice > activeBreakout.peak) activeBreakout.peak = tradePrice;
+
+                    if (tradePrice < activeBreakout.level && elapsedSecs <= 120) {
+                        falseBreakoutsList.unshift({
+                            type: 'BULL_TRAP',
+                            level: activeBreakout.level,
+                            price: activeBreakout.peak,
+                            time: now,
+                            candleIndex: currentCandleIndex
+                        });
+                        activeBreakout = null;
+                        renderTrapStats();
+                        renderAll();
+                    } 
+                    else if (elapsedSecs > 120 || (tradePrice - activeBreakout.level) / activeBreakout.level >= 0.0025) {
+                        realBreakoutsList.unshift({
+                            type: 'BULL_BREAKOUT',
+                            level: activeBreakout.level,
+                            price: tradePrice,
+                            time: now,
+                            candleIndex: currentCandleIndex
+                        });
+                        activeBreakout = null;
+                        renderTrapStats();
+                        renderAll();
+                    }
+                } else if (activeBreakout.type === 'BEAR') {
+                    if (tradePrice < activeBreakout.bottom) activeBreakout.bottom = tradePrice;
+
+                    if (tradePrice > activeBreakout.level && elapsedSecs <= 120) {
+                        falseBreakoutsList.unshift({
+                            type: 'BEAR_TRAP',
+                            level: activeBreakout.level,
+                            price: activeBreakout.bottom,
+                            time: now,
+                            candleIndex: currentCandleIndex
+                        });
+                        activeBreakout = null;
+                        renderTrapStats();
+                        renderAll();
+                    } 
+                    else if (elapsedSecs > 120 || (activeBreakout.level - tradePrice) / activeBreakout.level >= 0.0025) {
+                        realBreakoutsList.unshift({
+                            type: 'BEAR_BREAKOUT',
+                            level: activeBreakout.level,
+                            price: tradePrice,
+                            time: now,
+                            candleIndex: currentCandleIndex
+                        });
+                        activeBreakout = null;
+                        renderTrapStats();
+                        renderAll();
+                    }
+                }
+            }
+        }
+
+        function renderTrapStats() {
+            const container = document.getElementById('trap-stats-panel');
+            if (!container) return;
+
+            const now = Date.now();
+            const cutoffTime = now - (falseBreakoutWindowMins * 60 * 1000);
+
+            if (currentBreakoutTab === 'TRAPS') {
+                const recentTraps = falseBreakoutsList.filter(t => t.time >= cutoffTime);
+                const bullTraps = recentTraps.filter(t => t.type === 'BULL_TRAP').length;
+                const bearTraps = recentTraps.filter(t => t.type === 'BEAR_TRAP').length;
+
+                container.innerHTML = `
+                    <div class="grid grid-cols-3 gap-1 text-center mb-2 pb-2 border-b border-[#111]">
+                        <div class="bg-[#111] p-1.5 rounded">
+                            <div class="text-[9px] text-[#777] font-bold">BULL TRAPS</div>
+                            <div class="text-sm font-extrabold text-[#ff3232]">${bullTraps}</div>
+                        </div>
+                        <div class="bg-[#111] p-1.5 rounded">
+                            <div class="text-[9px] text-[#777] font-bold">BEAR TRAPS</div>
+                            <div class="text-sm font-extrabold text-[#00ff41]">${bearTraps}</div>
+                        </div>
+                        <div class="bg-[#111] p-1.5 rounded">
+                            <div class="text-[9px] text-[#777] font-bold">TOTAL</div>
+                            <div class="text-sm font-extrabold text-white">${recentTraps.length}</div>
+                        </div>
+                    </div>
+
+                    <div class="text-[10px] text-[#777] font-bold mb-1 uppercase">Falsos Rompimentos (${falseBreakoutWindowMins}m):</div>
+                    <div class="space-y-1 max-h-28 overflow-y-auto pr-1">
+                        ${recentTraps.length === 0 ? 
+                            `<div class="text-xs text-[#555] text-center py-2">Sem falsos rompimentos nos últimos ${falseBreakoutWindowMins} min</div>` :
+                            recentTraps.slice(0, 5).map(t => `
+                                <div class="flex justify-between items-center text-xs p-1.5 rounded bg-[#050505] border border-[#151515]">
+                                    <span class="${t.type === 'BULL_TRAP' ? 'text-[#ff3232]' : 'text-[#00ff41]'} font-bold">
+                                        ${t.type === 'BULL_TRAP' ? '🛑 FALSO ALTA' : '🚀 FALSO BAIXA'}
+                                    </span>
+                                    <span class="text-white font-bold">$${t.level.toFixed(1)}</span>
+                                    <span class="text-[#666] text-[10px]">${new Date(t.time).toLocaleTimeString('pt-BR')}</span>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+                `;
+            } else {
+                const recentReals = realBreakoutsList.filter(t => t.time >= cutoffTime);
+                const bullReals = recentReals.filter(t => t.type === 'BULL_BREAKOUT').length;
+                const bearReals = recentReals.filter(t => t.type === 'BEAR_BREAKOUT').length;
+
+                container.innerHTML = `
+                    <div class="grid grid-cols-3 gap-1 text-center mb-2 pb-2 border-b border-[#111]">
+                        <div class="bg-[#111] p-1.5 rounded">
+                            <div class="text-[9px] text-[#777] font-bold">ALTA REAL</div>
+                            <div class="text-sm font-extrabold text-[#00ff41]">${bullReals}</div>
+                        </div>
+                        <div class="bg-[#111] p-1.5 rounded">
+                            <div class="text-[9px] text-[#777] font-bold">BAIXA REAL</div>
+                            <div class="text-sm font-extrabold text-[#ff3232]">${bearReals}</div>
+                        </div>
+                        <div class="bg-[#111] p-1.5 rounded">
+                            <div class="text-[9px] text-[#777] font-bold">TOTAL</div>
+                            <div class="text-sm font-extrabold text-white">${recentReals.length}</div>
+                        </div>
+                    </div>
+
+                    <div class="text-[10px] text-[#777] font-bold mb-1 uppercase">Rompimentos Reais (${falseBreakoutWindowMins}m):</div>
+                    <div class="space-y-1 max-h-28 overflow-y-auto pr-1">
+                        ${recentReals.length === 0 ? 
+                            `<div class="text-xs text-[#555] text-center py-2">Sem rompimentos reais nos últimos ${falseBreakoutWindowMins} min</div>` :
+                            recentReals.slice(0, 5).map(t => `
+                                <div class="flex justify-between items-center text-xs p-1.5 rounded bg-[#050505] border border-[#151515]">
+                                    <span class="${t.type === 'BULL_BREAKOUT' ? 'text-[#00ff41]' : 'text-[#ff3232]'} font-bold">
+                                        ${t.type === 'BULL_BREAKOUT' ? '🚀 ALTA CONFIRMADA' : '💥 BAIXA CONFIRMADA'}
+                                    </span>
+                                    <span class="text-white font-bold">$${t.level.toFixed(1)}</span>
+                                    <span class="text-[#666] text-[10px]">${new Date(t.time).toLocaleTimeString('pt-BR')}</span>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+                `;
+            }
+        }
 
         function formatDuration(ms) {
             const totalSecs = Math.floor(ms / 1000);
@@ -258,4 +462,305 @@
         function formatTimeLabel(seconds) {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
-            if (mins > 0 && secs === 0) return `${seconds
+            if (mins > 0 && secs === 0) return `${seconds}s (${mins}m)`;
+            if (mins > 0) return `${seconds}s (${mins}m${secs}s)`;
+            return `${seconds}s`;
+        }
+
+        function setEngineProfile(profileKey) {
+            if (!ENGINE_PROFILES[profileKey]) return;
+            
+            currentEngineConfig = { ...ENGINE_PROFILES[profileKey] };
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.className = "mode-btn text-xs py-1.5 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]";
+            });
+
+            const activeBtn = document.getElementById(`btn-mode-${profileKey.toLowerCase()}`);
+            if (activeBtn) {
+                activeBtn.className = "mode-btn text-xs py-1.5 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]";
+            }
+
+            const badge = document.getElementById('engine-mode-badge');
+            if (badge) badge.textContent = profileKey;
+
+            document.getElementById('cfg-age').value = currentEngineConfig.maxOrderAgeSeconds;
+            document.getElementById('cfg-min-vol').value = currentEngineConfig.minOrderQtyBTC;
+            document.getElementById('cfg-threshold').value = currentEngineConfig.signalThresholdPct;
+
+            document.getElementById('lbl-age').textContent = formatTimeLabel(currentEngineConfig.maxOrderAgeSeconds);
+            document.getElementById('lbl-min-vol').textContent = `${currentEngineConfig.minOrderQtyBTC} BTC`;
+            document.getElementById('lbl-threshold').textContent = `${currentEngineConfig.signalThresholdPct}%`;
+
+            analyzeEngineWithFilters();
+        }
+
+        function updateCustomEngine() {
+            currentEngineConfig.maxOrderAgeSeconds = parseFloat(document.getElementById('cfg-age').value);
+            currentEngineConfig.minOrderQtyBTC = parseFloat(document.getElementById('cfg-min-vol').value);
+            currentEngineConfig.signalThresholdPct = parseFloat(document.getElementById('cfg-threshold').value);
+
+            document.getElementById('lbl-age').textContent = formatTimeLabel(currentEngineConfig.maxOrderAgeSeconds);
+            document.getElementById('lbl-min-vol').textContent = `${currentEngineConfig.minOrderQtyBTC} BTC`;
+            document.getElementById('lbl-threshold').textContent = `${currentEngineConfig.signalThresholdPct}%`;
+
+            const badge = document.getElementById('engine-mode-badge');
+            if (badge) badge.textContent = "CUSTOM";
+
+            analyzeEngineWithFilters();
+        }
+
+        function updateClock() {
+            document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
+        }
+
+        async function fetchCandles(interval = '30m') {
+            try {
+                const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=80`);
+                const data = await res.json();
+                priceData = data.map(c => ({
+                    time: c[0], open: parseFloat(c[1]), high: parseFloat(c[2]), low: parseFloat(c[3]), close: parseFloat(c[4]), volume: parseFloat(c[5])
+                }));
+                
+                const entryInput = document.getElementById('calc-entry');
+                if (entryInput && !entryInput.value && priceData.length > 0) {
+                    entryInput.value = priceData[priceData.length - 1].close.toFixed(1);
+                }
+                
+                calculateRiskReward();
+                renderAll();
+                renderTrapStats();
+            } catch (e) { console.error("API Error", e); }
+        }
+
+        function initKlineWS() {
+            if (klineWs) klineWs.close();
+            const interval = timeframeMap[currentTimeframe];
+            klineWs = new WebSocket(`wss://stream.binance.com:9443/ws/btcusdt@kline_${interval}`);
+            
+            klineWs.onmessage = (e) => {
+                const msg = JSON.parse(e.data);
+                const k = msg.k;
+                const newCandle = { time: k.t, open: parseFloat(k.o), high: parseFloat(k.h), low: parseFloat(k.l), close: parseFloat(k.c), volume: parseFloat(k.v) };
+                
+                if (priceData.length > 0 && priceData[priceData.length - 1].time === k.t) {
+                    priceData[priceData.length - 1] = newCandle;
+                } else {
+                    priceData.push(newCandle);
+                    priceData.shift();
+                }
+                renderAll();
+            };
+            document.getElementById('status-badge').textContent = `● LIVE ${currentTimeframe}`;
+        }
+
+        function initDepthWS() {
+            if (depthWs) depthWs.close();
+            depthWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@depth10@1000ms');
+
+            depthWs.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (data.bids && data.asks) {
+                    renderRealOrderBook(data.bids, data.asks);
+                }
+            };
+        }
+
+        function initTradeWS() {
+            if (tradeWs) tradeWs.close();
+            tradeWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
+
+            tradeWs.onmessage = (e) => {
+                const trade = JSON.parse(e.data);
+                processMarketTrade(trade);
+            };
+        }
+
+        function processMarketTrade(trade) {
+            const tradePrice = parseFloat(trade.p);
+            const tradeQty = parseFloat(trade.q);
+            const tradeTime = trade.T;
+            const isSell = trade.m;
+
+            detectBreakouts(tradePrice);
+
+            if (tradeQty < currentEngineConfig.minOrderQtyBTC) return;
+
+            orderBuffer.push({
+                price: tradePrice,
+                qty: tradeQty,
+                isSell: isSell,
+                time: tradeTime
+            });
+
+            if (orderBuffer.length > currentEngineConfig.maxOrders) {
+                orderBuffer.shift();
+            }
+
+            analyzeEngineWithFilters();
+        }
+
+        function analyzeEngineWithFilters() {
+            const now = Date.now();
+
+            orderBuffer = orderBuffer.filter(order => {
+                const ageInSeconds = (now - order.time) / 1000;
+                return ageInSeconds <= currentEngineConfig.maxOrderAgeSeconds;
+            });
+
+            if (orderBuffer.length === 0) {
+                const container = document.getElementById('signal-panel');
+                if (container) {
+                    container.innerHTML = `<div class="text-xs text-[#555] text-center py-2">Nenhuma ordem dentro dos critérios atuais (${currentEngineConfig.minOrderQtyBTC} BTC / ${formatTimeLabel(currentEngineConfig.maxOrderAgeSeconds)})</div>`;
+                }
+                return;
+            }
+
+            let buyVolume = 0, sellVolume = 0, buyCount = 0, sellCount = 0;
+            let buyOrders = [], sellOrders = [];
+
+            orderBuffer.forEach(order => {
+                if (order.isSell) {
+                    sellVolume += order.qty;
+                    sellCount++;
+                    sellOrders.push(order);
+                } else {
+                    buyVolume += order.qty;
+                    buyCount++;
+                    buyOrders.push(order);
+                }
+            });
+
+            const totalVolume = buyVolume + sellVolume;
+            const buyPct = totalVolume > 0 ? ((buyVolume / totalVolume) * 100).toFixed(1) : "50.0";
+            const sellPct = totalVolume > 0 ? ((sellVolume / totalVolume) * 100).toFixed(1) : "50.0";
+
+            buyOrders.sort((a, b) => b.qty - a.qty);
+            sellOrders.sort((a, b) => b.qty - a.qty);
+
+            renderFilteredPressurePanel(buyPct, sellPct, buyVolume, sellVolume, buyCount, sellCount, buyOrders[0], sellOrders[0]);
+        }
+
+        function renderFilteredPressurePanel(buyPct, sellPct, buyVol, sellVol, buyCnt, sellCnt, topBuy, topSell) {
+            const container = document.getElementById('signal-panel');
+            if (!container) return;
+
+            const bPct = parseFloat(buyPct);
+            const sPct = parseFloat(sellPct);
+
+            let newState = 'NEUTRAL';
+            let statusText = "MERCADO EQUILIBRADO";
+            let statusColor = "#ffaa00";
+
+            if (bPct >= currentEngineConfig.signalThresholdPct) {
+                newState = 'BUY';
+                statusText = `FORTE PRESSÃO COMPRADORA (${bPct}%)`;
+                statusColor = "#00ff41";
+            } else if (sPct >= currentEngineConfig.signalThresholdPct) {
+                newState = 'SELL';
+                statusText = `FORTE PRESSÃO VENDEDORA (${sPct}%)`;
+                statusColor = "#ff3232";
+            }
+
+            if (newState !== currentPressureState) {
+                const lastDurationMs = Date.now() - pressureStartTime;
+
+                if (currentPressureState !== 'NEUTRAL' && lastDurationMs > 3000) {
+                    pressureHistory.unshift({
+                        type: currentPressureState,
+                        duration: formatDuration(lastDurationMs),
+                        pct: currentPressureState === 'BUY' ? bPct : sPct,
+                        time: new Date().toLocaleTimeString('pt-BR')
+                    });
+                    if (pressureHistory.length > 3) pressureHistory.pop();
+                }
+
+                currentPressureState = newState;
+                pressureStartTime = Date.now();
+            }
+
+            const elapsedMs = Date.now() - pressureStartTime;
+            const durationText = formatDuration(elapsedMs);
+
+            let historyHtml = '';
+            if (pressureHistory.length > 0) {
+                historyHtml = `
+                    <div class="mt-2.5 pt-2 border-t border-[#111]">
+                        <div class="text-[10px] text-[#555] font-bold mb-1.5 uppercase">Últimos Impulsos Registados</div>
+                        <div class="space-y-1">
+                            ${pressureHistory.map(h => `
+                                <div class="flex justify-between text-xs font-semibold ${h.type === 'BUY' ? 'text-[#00ff41]' : 'text-[#ff3232]'}">
+                                    <span>${h.type === 'BUY' ? '🟢 COMPRA' : '🔴 VENDA'} (${h.duration})</span>
+                                    <span class="text-[#666]">${h.time}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="text-xs font-bold mb-1.5" style="color: ${statusColor}">
+                    ${statusText}
+                </div>
+
+                <div class="flex items-center gap-2 text-xs text-gray-300 mb-2.5">
+                    <span class="text-[#777] font-semibold">⏱️ DURAÇÃO:</span>
+                    <span class="font-bold text-white bg-[#111] px-2 py-0.5 rounded border border-[#222]">
+                        ${durationText}
+                    </span>
+                    ${currentPressureState !== 'NEUTRAL' ? '<span class="text-xs text-[#00ff41] font-bold animate-pulse">● ATIVO</span>' : ''}
+                </div>
+
+                <div class="w-full h-5 bg-[#111] rounded overflow-hidden flex my-2 border border-[#222]">
+                    <div style="width: ${buyPct}%; background: #00ff41;" class="h-full flex items-center justify-center text-xs text-black font-extrabold">
+                        ${buyPct}%
+                    </div>
+                    <div style="width: ${sellPct}%; background: #ff3232;" class="h-full flex items-center justify-center text-xs text-white font-extrabold">
+                        ${sellPct}%
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs my-2.5 text-gray-300">
+                    <div>
+                        <span class="text-[#00ff41] font-bold">COMPRAS:</span> ${buyCnt} ordens<br>
+                        <span class="font-semibold text-white">VOL: ${buyVol.toFixed(3)} BTC</span>
+                    </div>
+                    <div>
+                        <span class="text-[#ff3232] font-bold">VENDAS:</span> ${sellCnt} ordens<br>
+                        <span class="font-semibold text-white">VOL: ${sellVol.toFixed(3)} BTC</span>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-[#111]">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="text-xs text-[#777] font-bold">MAIORES ORDENS (TOP BALEIAS)</span>
+                        <span class="text-[10px] text-[#00ff41] font-bold">> ${currentEngineConfig.minOrderQtyBTC} BTC</span>                     </div>                     <div class="text-xs space-y-1 font-semibold">                         <div class="text-[#00ff41]">                             🟢 Compra: $${topBuy ? topBuy.price.toFixed(1) : '—'} (${topBuy ? topBuy.qty.toFixed(3) : '0'} BTC)                         </div>                         <div class="text-[#ff3232]">                             🔴 Venda: $${topSell ? topSell.price.toFixed(1) : '—'} (${topSell ? topSell.qty.toFixed(3) : '0'} BTC)
+                        </div>
+                    </div>
+                </div>
+
+                ${historyHtml}
+            `;
+        }
+
+        function renderRealOrderBook(bids, asks) {
+            const container = document.getElementById('orderbook');
+            if (!container) return;
+
+            const topAsks = asks.slice(0, 5).reverse();
+            const topBids = bids.slice(0, 5);
+
+            let html = `
+                <div class="flex justify-between text-xs text-[#555] font-bold mb-1 px-1">
+                    <span>PREÇO (USDT)</span>
+                    <span>QTD (BTC)</span>
+                </div>
+            `;
+
+            topAsks.forEach(ask => {
+                const p = parseFloat(ask[0]).toFixed(1);
+                const q = parseFloat(ask[1]).toFixed(3);
+                html += `
+                    <div class="flex justify-between text-[#ff3232] font-bold hover:bg-[#ff323210] px-1 py-0.5 rounded transition-colors">
+                        <span>
