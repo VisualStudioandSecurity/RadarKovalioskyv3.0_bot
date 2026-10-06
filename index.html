@@ -59,7 +59,7 @@
                 </div>
 
                 <div class="flex-1 relative bg-[#050505]">
-                    <canvas id="chart-canvas"></canvas>
+                    <canvas id="chart-canvas" class="w-full h-full block"></canvas>
                 </div>
 
                 <div class="flex items-center gap-2 px-4 py-2 border-t border-[#111]">
@@ -238,7 +238,7 @@
         let tradeWs = null;
         let posType = 'LONG';
         const canvas = document.getElementById('chart-canvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas ? canvas.getContext('2d') : null;
 
         const ENGINE_PROFILES = {
             SCALPING: { name: "RÁPIDO (5 MIN)", minOrderQtyBTC: 0.01, maxOrderAgeSeconds: 300, signalThresholdPct: 60, maxOrders: 500 },
@@ -253,7 +253,7 @@
         let pressureStartTime = Date.now();
         let pressureHistory = [];
 
-        // --- SISTEMA DE DETEÇÃO E ANOTAÇÃO VISUAL DE ROMPIMENTOS ---
+        // --- SISTEMA DE DETEÇÃO DE ROMPIMENTOS ---
         let falseBreakoutsList = [];
         let realBreakoutsList = [];
         let activeBreakout = null;
@@ -266,11 +266,11 @@
             const btnReal = document.getElementById('tab-btn-real');
 
             if (tab === 'TRAPS') {
-                btnTraps.className = "tab-btn active-tab flex-1 text-[10px] py-1 rounded border border-[#00ff41]";
-                btnReal.className = "tab-btn flex-1 text-[10px] py-1 rounded border border-[#333] text-[#777]";
+                if (btnTraps) btnTraps.className = "tab-btn active-tab flex-1 text-[10px] py-1 rounded border border-[#00ff41]";
+                if (btnReal) btnReal.className = "tab-btn flex-1 text-[10px] py-1 rounded border border-[#333] text-[#777]";
             } else {
-                btnReal.className = "tab-btn active-tab flex-1 text-[10px] py-1 rounded border border-[#00ff41]";
-                btnTraps.className = "tab-btn flex-1 text-[10px] py-1 rounded border border-[#333] text-[#777]";
+                if (btnReal) btnReal.className = "tab-btn active-tab flex-1 text-[10px] py-1 rounded border border-[#00ff41]";
+                if (btnTraps) btnTraps.className = "tab-btn flex-1 text-[10px] py-1 rounded border border-[#333] text-[#777]";
             }
             renderTrapStats();
         }
@@ -287,24 +287,25 @@
                 activeBtn.className = "trap-btn text-xs py-1 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]";
             }
 
-            document.getElementById('trap-window-badge').textContent = `JANELA: ${mins}M`;
+            const badge = document.getElementById('trap-window-badge');
+            if (badge) badge.textContent = `JANELA: ${mins}M`;
             renderTrapStats();
+            renderAll();
         }
 
         function detectBreakouts(tradePrice) {
-            if (priceData.length < 10) return;
+            if (!priceData || priceData.length < 10) return;
 
             const recentCandles = priceData.slice(-20);
             const localHigh = Math.max(...recentCandles.map(c => c.high));
             const localLow = Math.min(...recentCandles.map(c => c.low));
             const now = Date.now();
-            const currentCandleIndex = priceData.length - 1;
 
             if (!activeBreakout) {
                 if (tradePrice > localHigh) {
-                    activeBreakout = { type: 'BULL', level: localHigh, peak: tradePrice, time: now, candleIndex: currentCandleIndex };
+                    activeBreakout = { type: 'BULL', level: localHigh, peak: tradePrice, time: now };
                 } else if (tradePrice < localLow) {
-                    activeBreakout = { type: 'BEAR', level: localLow, bottom: tradePrice, time: now, candleIndex: currentCandleIndex };
+                    activeBreakout = { type: 'BEAR', level: localLow, bottom: tradePrice, time: now };
                 }
             } else {
                 const elapsedSecs = (now - activeBreakout.time) / 1000;
@@ -317,20 +318,17 @@
                             type: 'BULL_TRAP',
                             level: activeBreakout.level,
                             price: activeBreakout.peak,
-                            time: now,
-                            candleIndex: currentCandleIndex
+                            time: now
                         });
                         activeBreakout = null;
                         renderTrapStats();
                         renderAll();
-                    } 
-                    else if (elapsedSecs > 120 || (tradePrice - activeBreakout.level) / activeBreakout.level >= 0.0025) {
+                    } else if (elapsedSecs > 120 || (tradePrice - activeBreakout.level) / activeBreakout.level >= 0.0025) {
                         realBreakoutsList.unshift({
                             type: 'BULL_BREAKOUT',
                             level: activeBreakout.level,
                             price: tradePrice,
-                            time: now,
-                            candleIndex: currentCandleIndex
+                            time: now
                         });
                         activeBreakout = null;
                         renderTrapStats();
@@ -344,20 +342,17 @@
                             type: 'BEAR_TRAP',
                             level: activeBreakout.level,
                             price: activeBreakout.bottom,
-                            time: now,
-                            candleIndex: currentCandleIndex
+                            time: now
                         });
                         activeBreakout = null;
                         renderTrapStats();
                         renderAll();
-                    } 
-                    else if (elapsedSecs > 120 || (activeBreakout.level - tradePrice) / activeBreakout.level >= 0.0025) {
+                    } else if (elapsedSecs > 120 || (activeBreakout.level - tradePrice) / activeBreakout.level >= 0.0025) {
                         realBreakoutsList.unshift({
                             type: 'BEAR_BREAKOUT',
                             level: activeBreakout.level,
                             price: tradePrice,
-                            time: now,
-                            candleIndex: currentCandleIndex
+                            time: now
                         });
                         activeBreakout = null;
                         renderTrapStats();
@@ -455,7 +450,7 @@
             const totalSecs = Math.floor(ms / 1000);
             const mins = Math.floor(totalSecs / 60);
             const secs = totalSecs % 60;
-            if (mins > 0) return `${mins}m${secs}s`;
+            if (mins > 0) return `${mins}m ${secs}s`;
             return `${secs}s`;
         }
 
@@ -463,7 +458,7 @@
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
             if (mins > 0 && secs === 0) return `${seconds}s (${mins}m)`;
-            if (mins > 0) return `${seconds}s (${mins}m${secs}s)`;
+            if (mins > 0) return `${seconds}s (${mins}m ${secs}s)`;
             return `${seconds}s`;
         }
 
@@ -511,7 +506,8 @@
         }
 
         function updateClock() {
-            document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
+            const clockEl = document.getElementById('clock');
+            if (clockEl) clockEl.textContent = new Date().toLocaleTimeString('pt-BR');
         }
 
         async function fetchCandles(interval = '30m') {
@@ -545,13 +541,14 @@
                 
                 if (priceData.length > 0 && priceData[priceData.length - 1].time === k.t) {
                     priceData[priceData.length - 1] = newCandle;
-                } else {
+                } else if (priceData.length > 0) {
                     priceData.push(newCandle);
                     priceData.shift();
                 }
                 renderAll();
             };
-            document.getElementById('status-badge').textContent = `● LIVE ${currentTimeframe}`;
+            const badge = document.getElementById('status-badge');
+            if (badge) badge.textContent = `● LIVE ${currentTimeframe}`;
         }
 
         function initDepthWS() {
@@ -735,7 +732,14 @@
                 <div class="pt-2 border-t border-[#111]">
                     <div class="flex justify-between items-center mb-1.5">
                         <span class="text-xs text-[#777] font-bold">MAIORES ORDENS (TOP BALEIAS)</span>
-                        <span class="text-[10px] text-[#00ff41] font-bold">> ${currentEngineConfig.minOrderQtyBTC} BTC</span>                     </div>                     <div class="text-xs space-y-1 font-semibold">                         <div class="text-[#00ff41]">                             🟢 Compra: $${topBuy ? topBuy.price.toFixed(1) : '—'} (${topBuy ? topBuy.qty.toFixed(3) : '0'} BTC)                         </div>                         <div class="text-[#ff3232]">                             🔴 Venda: $${topSell ? topSell.price.toFixed(1) : '—'} (${topSell ? topSell.qty.toFixed(3) : '0'} BTC)
+                        <span class="text-[10px] text-[#00ff41] font-bold">> ${currentEngineConfig.minOrderQtyBTC} BTC</span>
+                    </div>
+                    <div class="text-xs space-y-1 font-semibold">
+                        <div class="text-[#00ff41]">
+                            🟢 Compra: $${topBuy ? topBuy.price.toFixed(1) : '—'} (${topBuy ? topBuy.qty.toFixed(3) : '0'} BTC)
+                        </div>
+                        <div class="text-[#ff3232]">
+                            🔴 Venda: $${topSell ? topSell.price.toFixed(1) : '—'} (${topSell ? topSell.qty.toFixed(3) : '0'} BTC)
                         </div>
                     </div>
                 </div>
@@ -763,4 +767,251 @@
                 const q = parseFloat(ask[1]).toFixed(3);
                 html += `
                     <div class="flex justify-between text-[#ff3232] font-bold hover:bg-[#ff323210] px-1 py-0.5 rounded transition-colors">
-                        <span>
+                        <span>${p}</span>
+                        <span>${q}</span>
+                    </div>
+                `;
+            });
+
+            html += `<div class="my-1 border-b border-[#222]"></div>`;
+
+            topBids.forEach(bid => {
+                const p = parseFloat(bid[0]).toFixed(1);
+                const q = parseFloat(bid[1]).toFixed(3);
+                html += `
+                    <div class="flex justify-between text-[#00ff41] font-bold hover:bg-[#00ff4110] px-1 py-0.5 rounded transition-colors">
+                        <span>${p}</span>
+                        <span>${q}</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderAll() {
+            if (!canvas || !ctx || !priceData || priceData.length === 0) return;
+            
+            const parent = canvas.parentElement;
+            const w = canvas.width = parent.clientWidth;
+            const h = canvas.height = parent.clientHeight;
+            ctx.clearRect(0, 0, w, h);
+
+            const pad = { t: 30, b: 30, r: 60, l: 10 };
+            const drawW = w - pad.l - pad.r, drawH = h - pad.t - pad.b;
+            const maxP = Math.max(...priceData.map(d => d.high));
+            const minP = Math.min(...priceData.map(d => d.low));
+            const range = maxP - minP || 1;
+            const getY = (p) => pad.t + drawH - ((p - minP) / range) * drawH;
+
+            const candleStep = drawW / priceData.length;
+            const candleW = candleStep * 0.8;
+
+            // 1. Desenhar Candlesticks
+            priceData.forEach((d, i) => {
+                const x = pad.l + (i * candleStep) + (candleStep / 2);
+                const color = d.close >= d.open ? '#00ff41' : '#ff3232';
+                ctx.strokeStyle = color; ctx.fillStyle = color;
+                
+                ctx.beginPath(); ctx.moveTo(x, getY(d.high)); ctx.lineTo(x, getY(d.low)); ctx.stroke();
+                
+                const y1 = getY(d.open), y2 = getY(d.close);
+                ctx.fillRect(x - candleW/2, Math.min(y1, y2), candleW, Math.max(1, Math.abs(y1 - y2)));
+            });
+
+            // 2. Desenhar Sinais Visuais de Traps (Falsos Rompimentos)
+            const cutoffTime = Date.now() - (falseBreakoutWindowMins * 60 * 1000);
+            const activeTraps = falseBreakoutsList.filter(t => t.time >= cutoffTime);
+
+            activeTraps.forEach(trap => {
+                const candleIdx = priceData.length - 1;
+                const x = pad.l + (candleIdx * candleStep) + (candleStep / 2);
+                const isBull = trap.type === 'BULL_TRAP';
+                const y = getY(isBull ? priceData[candleIdx].high : priceData[candleIdx].low);
+
+                ctx.fillStyle = isBull ? '#ff3232' : '#00ff41';
+                ctx.font = 'bold 10px JetBrains Mono';
+                ctx.textAlign = 'center';
+
+                if (isBull) {
+                    ctx.fillText('🔻 TRAP', x, Math.max(pad.t, y - 12));
+                } else {
+                    ctx.fillText('🔺 TRAP', x, Math.min(h - pad.b, y + 18));
+                }
+            });
+
+            // 3. Desenhar Sinais Visuais de Breakouts (Rompimentos Reais)
+            const activeReals = realBreakoutsList.filter(t => t.time >= cutoffTime);
+
+            activeReals.forEach(real => {
+                const yLevel = getY(real.level);
+                const isBull = real.type === 'BULL_BREAKOUT';
+
+                ctx.strokeStyle = isBull ? '#00ff4188' : '#ff323288';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(pad.l, yLevel);
+                ctx.lineTo(w - pad.r, yLevel);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                const candleIdx = priceData.length - 1;
+                const x = pad.l + (candleIdx * candleStep) + (candleStep / 2);
+                
+                ctx.fillStyle = isBull ? '#00ff41' : '#ff3232';
+                ctx.font = 'bold 10px JetBrains Mono';
+                ctx.textAlign = 'center';
+
+                if (isBull) {
+                    ctx.fillText('🚀 BREAKOUT', Math.max(pad.l + 40, x - 25), Math.max(pad.t, yLevel - 8));
+                } else {
+                    ctx.fillText('💥 BREAKOUT', Math.max(pad.l + 40, x - 25), Math.min(h - pad.b, yLevel + 14));
+                }
+            });
+
+            // 4. Atualizar Preço no Cabeçalho
+            const last = priceData[priceData.length - 1];
+            const pDisp = document.getElementById('price-display');
+            if (pDisp) pDisp.textContent = `$${last.close.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            
+            const cDisp = document.getElementById('change-display');
+            if (cDisp) {
+                const change = ((last.close - priceData[0].close) / priceData[0].close * 100).toFixed(2);
+                cDisp.textContent = `${change}%`;
+                cDisp.style.color = change >= 0 ? '#00ff41' : '#ff3232';
+            }
+        }
+
+        function setPosType(type) {
+            posType = type;
+            const btnLong = document.getElementById('btn-long');
+            const btnShort = document.getElementById('btn-short');
+
+            if (type === 'LONG') {
+                if (btnLong) btnLong.className = "pos-btn active-long flex-1 text-xs py-1.5 rounded border border-[#00ff41]";
+                if (btnShort) btnShort.className = "pos-btn flex-1 text-xs py-1.5 rounded border border-[#333] text-[#666]";
+            } else {
+                if (btnShort) btnShort.className = "pos-btn active-short flex-1 text-xs py-1.5 rounded border border-[#ff3232]";
+                if (btnLong) btnLong.className = "pos-btn flex-1 text-xs py-1.5 rounded border border-[#333] text-[#666]";
+            }
+            calculateRiskReward();
+        }
+
+        function useCurrentPrice() {
+            if (priceData.length > 0) {
+                const currentPrice = priceData[priceData.length - 1].close;
+                const input = document.getElementById('calc-entry');
+                if (input) input.value = currentPrice.toFixed(1);
+                calculateRiskReward();
+            }
+        }
+
+        function calculateRiskReward() {
+            const entryInput = document.getElementById('calc-entry');
+            const capitalInput = document.getElementById('calc-capital');
+            const slPctInput = document.getElementById('calc-sl-pct');
+            const tpPctInput = document.getElementById('calc-tp-pct');
+
+            if (!entryInput || !capitalInput || !slPctInput || !tpPctInput) return;
+
+            const entry = parseFloat(entryInput.value);
+            const capital = parseFloat(capitalInput.value) || 0;
+            const slPct = parseFloat(slPctInput.value) || 0;
+            const tpPct = parseFloat(tpPctInput.value) || 0;
+
+            if (!entry || entry <= 0) {
+                document.getElementById('res-sl-price').textContent = "—";
+                document.getElementById('res-sl-val').textContent = "—";
+                document.getElementById('res-tp-price').textContent = "—";
+                document.getElementById('res-tp-val').textContent = "—";
+                document.getElementById('res-rr').textContent = "—";
+                return;
+            }
+
+            let slPrice, tpPrice, lossVal, profitVal;
+
+            if (posType === 'LONG') {
+                slPrice = entry * (1 - (slPct / 100));
+                tpPrice = entry * (1 + (tpPct / 100));
+            } else {
+                slPrice = entry * (1 + (slPct / 100));
+                tpPrice = entry * (1 - (tpPct / 100));
+            }
+
+            lossVal = capital * (slPct / 100);
+            profitVal = capital * (tpPct / 100);
+            const rrRatio = slPct > 0 ? (tpPct / slPct).toFixed(2) : "0.00";
+
+            document.getElementById('res-sl-price').textContent = `$${slPrice.toFixed(1)}`;
+            document.getElementById('res-sl-val').textContent = `-$${lossVal.toFixed(2)} (${slPct}%)`;
+            document.getElementById('res-tp-price').textContent = `$${tpPrice.toFixed(1)}`;
+            document.getElementById('res-tp-val').textContent = `+$${profitVal.toFixed(2)} (${tpPct}%)`;
+            document.getElementById('res-rr').textContent = `1 : ${rrRatio}`;
+        }
+
+        async function fetchNews() {
+            const container = document.getElementById('news-container');
+            if (!container) return;
+            try {
+                const rss = 'https://br.cointelegraph.com/rss';
+                const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rss)}`;
+                const res = await fetch(api);
+                const data = await res.json();
+                
+                if (data.status === 'ok') {
+                    container.innerHTML = data.items.map(item => `
+                        <div class="mb-2 pb-2 border-b border-[#111] hover:bg-[#ffffff05] cursor-pointer" onclick="window.open('${item.link}', '_blank')">
+                            <div class="text-xs font-bold text-gray-200 leading-tight">${item.title}</div>
+                            <div class="text-[10px] text-[#555] mt-1">${new Date(item.pubDate).toLocaleTimeString()} - ${item.author || 'COINTELEGRAPH'}</div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) { console.error("News Error"); }
+        }
+
+        async function initTicker() {
+            const tickerEl = document.getElementById('ticker-bar');
+            if (!tickerEl) return;
+            try {
+                const res = await fetch('https://api.binance.com/api/v3/ticker/24h');
+                const data = await res.json();
+                const coins = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT'];
+                const filtered = data.filter(d => coins.includes(d.symbol));
+                tickerEl.innerHTML = [...filtered, ...filtered].map(d => `
+                    <div class="inline-flex items-center gap-2 px-6">
+                        <span class="text-[#666] text-xs font-bold">${d.symbol.replace('USDT', '')}</span>
+                        <span class="text-white text-xs font-bold">$${parseFloat(d.lastPrice).toFixed(2)}</span>
+                        <span class="${d.priceChangePercent >= 0 ? 'text-[#00ff41]' : 'text-[#ff3232]'} text-xs font-bold">${d.priceChangePercent}%</span>
+                    </div>
+                `).join('');
+            } catch (e) {}
+        }
+
+        document.querySelectorAll('.tf-btn').forEach(btn => {
+            btn.onclick = async () => {
+                document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                currentTimeframe = btn.textContent;
+                priceData = [];
+                await fetchCandles(timeframeMap[currentTimeframe]);
+                initKlineWS();
+            };
+        });
+
+        window.onload = () => {
+            setInterval(updateClock, 1000);
+            fetchCandles('30m');
+            initKlineWS();
+            initDepthWS();
+            initTradeWS();
+            fetchNews();
+            initTicker();
+            setInterval(fetchNews, 300000);
+            setInterval(initTicker, 60000);
+        };
+        window.onresize = renderAll;
+    </script>
+</body>
+</html>
