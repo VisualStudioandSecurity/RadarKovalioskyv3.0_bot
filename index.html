@@ -156,9 +156,116 @@
                             <!-- Trades injetados dinamicamente -->
                         </div>
                     </div>
+                </div> 
+                <!-- PAINEL DE FORWARD TESTING (SISTEMA AO VIVO) -->
+                <div class="p-3.5 border-b border-[#111] bg-[#0a0a0a]">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-[#00ff41]">🔴 TESTE AO VIVO (FORWARD)</span>
+                        <span id="ft-status-tag" class="text-[9px] bg-[#ff323220] text-[#ff3232] px-1.5 py-0.5 rounded font-bold">DESLIGADO</span>
+                    </div>
+
+                    <div class="space-y-2 text-xs">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] text-[#777] block mb-1">CAPITAL VIRTUAL ($)</label>
+                                <input type="number" id="ft-capital" value="1000" class="w-full bg-[#050505] border border-[#222] text-white text-xs p-1 rounded font-mono font-bold">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-[#777] block mb-1">RISCO POR TRADE ($)</label>
+                                <input type="number" id="ft-risk" value="20" class="w-full bg-[#050505] border border-[#222] text-[#00ff41] text-xs p-1 rounded font-mono font-bold">
+                            </div>
+                        </div>
+
+                        <button id="btn-toggle-ft" onclick="toggleForwardTesting()" class="w-full py-2 bg-[#00ff41] text-black font-extrabold text-xs rounded hover:bg-[#00cc33] transition-all shadow-lg shadow-[#00ff4120]">
+                            ▶ INICIAR TESTE EM TEMPO REAL
+                        </button>
+                    </div>
+
+                    <!-- MÉTRICAS AO VIVO -->
+                    <div id="ft-metrics-panel" class="mt-3 hidden">
+                        <div class="grid grid-cols-3 gap-1 text-center mb-2">
+                            <div class="bg-[#050505] p-1.5 rounded border border-[#151515]">
+                                <div class="text-[8px] text-[#777]">PnL AO VIVO</div>
+                                <div id="ft-res-pnl" class="text-xs font-bold text-[#00ff41]">$0.00</div>
+                            </div>
+                            <div class="bg-[#050505] p-1.5 rounded border border-[#151515]">
+                                <div class="text-[8px] text-[#777]">WIN RATE</div>
+                                <div id="ft-res-winrate" class="text-xs font-bold text-white">0%</div>
+                            </div>
+                            <div class="bg-[#050505] p-1.5 rounded border border-[#151515]">
+                                <div class="text-[8px] text-[#777]">TRADES</div>
+                                <div id="ft-res-trades" class="text-xs font-bold text-white">0</div>
+                            </div>
+                        </div>
+
+                        <!-- POSIÇÃO ATIVA NO MOMENTO -->
+                        <div id="ft-active-position-card" class="p-2 rounded bg-[#050505] border border-[#222] mb-2 hidden">
+                            <div class="flex justify-between items-center text-[10px] mb-1">
+                                <span class="text-[#777] font-bold">POSIÇÃO ATIVA:</span>
+                                <span id="ft-pos-side" class="font-extrabold text-[#00ff41]">LONG</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-1 text-[9px] font-mono">
+                                <div><span class="text-[#555]">ENTRADA:</span> <b id="ft-pos-entry" class="text-white">$0</b></div>
+                                <div><span class="text-[#555]">ALVO (TP):</span> <b id="ft-pos-tp" class="text-[#00ff41]">$0</b></div>
+                                <div><span class="text-[#555]">STOP (SL):</span> <b id="ft-pos-sl" class="text-[#ff3232]">$0</b></div>
+                            </div>
+                        </div>
+
+                        <div class="text-[9px] font-bold text-[#777] mb-1 uppercase">📜 LOGS DE EXECUÇÃO EM TEMPO REAL:</div>
+                        <div id="ft-logs-container" class="space-y-1 max-h-32 overflow-y-auto pr-1 text-[9px] font-mono">
+                            <div class="text-[#555] italic">Aguardando gatilho de mercado...</div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- MODO DO MOTOR -->
+                <!-- PAINEL DE BACKTESTING HISTÓRICO -->
+                <div class="p-3.5 border-b border-[#111]">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-[#00ff41]">🧪 BACKTEST HISTÓRICO</span>
+                        <span class="text-[9px] bg-[#00ff4120] text-[#00ff41] px-1.5 py-0.5 rounded font-bold">VELAS PASSADAS</span>
+                    </div>
+
+                    <div class="space-y-2.5 text-xs">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] text-[#777] block mb-1">VELAS</label>
+                                <select id="bt-candles-count" class="w-full bg-[#050505] border border-[#222] text-[#00ff41] text-xs p-1 rounded font-mono">
+                                    <option value="100">100 Velas</option>
+                                    <option value="200" selected>200 Velas</option>
+                                    <option value="500">500 Velas</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-[#777] block mb-1">R : R RATIO</label>
+                                <select id="bt-rr-ratio" class="w-full bg-[#050505] border border-[#222] text-[#00ff41] text-xs p-1 rounded font-mono">
+                                    <option value="1.5">1 : 1.5</option>
+                                    <option value="2.0" selected>1 : 2.0</option>
+                                    <option value="3.0">1 : 3.0</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button onclick="runBacktestStrategy()" class="w-full py-1.5 bg-[#111] text-[#00ff41] border border-[#00ff41] font-bold text-xs rounded hover:bg-[#00ff41] hover:text-black transition-all">
+                            📊 RODAR SIMULAÇÃO HISTÓRICA
+                        </button>
+                    </div>
+
+                    <!-- RESULTADO DO REPORT HISTÓRICO -->
+                    <div id="backtest-report-container" class="mt-3 hidden">
+                        <div class="grid grid-cols-2 gap-1.5 text-center mb-2">
+                            <div class="bg-[#050505] p-2 rounded border border-[#151515]">
+                                <div class="text-[9px] text-[#777]">WIN RATE</div>
+                                <div id="bt-res-winrate" class="text-sm font-extrabold text-[#00ff41]">0%</div>
+                            </div>
+                            <div class="bg-[#050505] p-2 rounded border border-[#151515]">
+                                <div class="text-[9px] text-[#777]">PnL ESTIMADO</div>
+                                <div id="bt-res-pnl" class="text-sm font-extrabold text-white">$0.00</div>
+                            </div>
+                        </div>
+                        <div id="bt-trades-history" class="space-y-1 max-h-28 overflow-y-auto pr-1 text-[10px]"></div>
+                    </div>
+                </div>
+            <!-- MODO DO MOTOR -->
                 <div class="p-3.5 border-b border-[#111]">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs font-bold text-[#00ff41]">MODO DO MOTOR</span>
