@@ -40,7 +40,6 @@
             </div>
             
             <div class="flex items-center gap-4 text-xs font-semibold">
-                <!-- ALTERNATIVE.ME: FEAR & GREED BADGE -->
                 <div id="fng-badge" class="flex items-center gap-1.5 px-2 py-1 rounded border border-[#222] bg-[#050505]">
                     <span class="text-[10px] text-[#777]">F&G:</span>
                     <span id="fng-val" class="font-bold text-white">--</span>
@@ -51,7 +50,7 @@
             </div>
         </header>
 
-        <!-- TICKER BAR (CRYPTOCOMPARE + OKX DATA) -->
+        <!-- TICKER BAR -->
         <div class="relative z-10 overflow-hidden border-b border-[#111]" style="background: #080808;">
             <div class="ticker-scroll flex whitespace-nowrap py-2 text-xs font-medium" id="ticker-bar">
                 <div class="px-4 text-[#555]">Carregando cotações via CryptoCompare & OKX...</div>
@@ -65,7 +64,6 @@
                 <div class="flex items-center justify-between px-4 py-2 border-b border-[#111]">
                     <div class="flex items-center gap-4">
                         <span class="text-xl font-bold" style="color: #00ff41; font-family: 'Orbitron';">BTC/USDT</span>
-                        <!-- OKX REAL-TIME FEED BADGE -->
                         <div class="flex items-center gap-2 text-xs border-l border-[#222] pl-3">
                             <span class="text-[#777]">OKX:</span>
                             <span id="okx-price-display" class="font-bold text-white">—</span>
@@ -95,10 +93,10 @@
                 </div>
             </div>
 
-            <!-- BARRA LATERAL DA DIREITA -->
+            <!-- BARRA LATERAL DIREITA -->
             <aside class="w-84 border-l border-[#111] flex flex-col bg-[#080808] overflow-y-auto">
                 
-                <!-- PAINEL ON-CHAIN (GLASSNODE + CRYPTOQUANT) -->
+                <!-- MÉTRICAS ON-CHAIN -->
                 <div class="p-3.5 border-b border-[#111]">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs font-bold text-[#00ff41]">🔗 MÉTRICAS ON-CHAIN</span>
@@ -130,7 +128,6 @@
                         <span class="text-xs font-bold text-[#00ff41]">MODO DO MOTOR</span>
                         <span id="engine-mode-badge" class="text-xs px-2 py-0.5 rounded bg-[#00ff4120] text-[#00ff41] font-bold">DAYTRADE</span>
                     </div>
-
                     <div class="grid grid-cols-3 gap-1.5 mb-3">
                         <button onclick="setEngineProfile('SCALPING', this)" class="mode-btn text-xs py-1.5 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">⚡ 5 MIN</button>
                         <button onclick="setEngineProfile('DAYTRADE', this)" class="mode-btn text-xs py-1.5 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]">🎯 10 MIN</button>
@@ -138,7 +135,7 @@
                     </div>
                 </div>
 
-                <!-- PAINEL DE NOTÍCIAS & SENTIMENTO -->
+                <!-- NOTÍCIAS & SENTIMENTO -->
                 <div class="p-3.5 border-b border-[#111]">
                     <div class="flex justify-between items-center mb-2.5">
                         <div class="flex items-center gap-2">
@@ -168,7 +165,7 @@
                     </div>
                 </div>
 
-                <!-- PAINEL DE ANÁLISE DE ROMPIMENTOS -->
+                <!-- ANÁLISE DE ROMPIMENTOS -->
                 <div class="p-3.5 border-b border-[#111]">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs font-bold text-[#00ff41]">ANÁLISE DE ROMPIMENTOS</span>
@@ -185,12 +182,25 @@
                     </div>
                 </div>
 
-                <!-- ORDER BOOK (BINANCE WS) -->
+                <!-- ORDER BOOK (BINANCE WS) COM PRESSÃO DE COMPRA/VENDA -->
                 <div class="p-3.5 border-b border-[#111]">
                     <div class="flex justify-between items-center mb-2">
                         <div class="text-xs font-bold text-[#00ff41]">ORDER BOOK (REAL-TIME)</div>
                         <span class="text-[10px] text-[#00ff4188]">● BINANCE WS</span>
                     </div>
+
+                    <!-- BARRA DE PRESSÃO DE ORDENS -->
+                    <div class="mb-2">
+                        <div class="flex justify-between text-[10px] font-bold mb-1">
+                            <span id="buy-pressure-pct" class="text-[#00ff41]">COMPRA: 50%</span>
+                            <span id="sell-pressure-pct" class="text-[#ff3232]">VENDA: 50%</span>
+                        </div>
+                        <div class="w-full bg-[#111] h-2 rounded overflow-hidden flex">
+                            <div id="buy-pressure-bar" class="bg-[#00ff41] h-full transition-all duration-300" style="width: 50%;"></div>
+                            <div id="sell-pressure-bar" class="bg-[#ff3232] h-full transition-all duration-300" style="width: 50%;"></div>
+                        </div>
+                    </div>
+
                     <div id="orderbook" class="space-y-1 font-mono text-xs">
                         <div class="text-xs text-[#555] text-center py-2">Conectando ao Livro...</div>
                     </div>
@@ -231,7 +241,7 @@
             </aside>
         </main>
 
-        <!-- MODAL DE CONFIGURAÇÃO DE CHAVES API -->
+        <!-- MODAL CHAVES API -->
         <div id="api-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
             <div class="bg-[#0a0a0a] border border-[#00ff41] p-5 rounded max-w-md w-full space-y-4">
                 <div class="flex justify-between items-center border-b border-[#222] pb-2">
@@ -261,7 +271,6 @@
         </footer>
     </div>
 
-    <!-- SCRIPT CORRIGIDO -->
     <script>
         let priceData = [];
         let currentTimeframe = 'M30';
@@ -269,12 +278,6 @@
         let currentPrice = 0;
         let okxWebSocket = null;
         let binanceWebSocket = null;
-
-        const API_KEYS = {
-            glassnode: localStorage.getItem('key_glassnode') || '',
-            cryptoquant: localStorage.getItem('key_cryptoquant') || '',
-            cryptopanic: localStorage.getItem('key_cryptopanic') || ''
-        };
 
         window.addEventListener('DOMContentLoaded', () => {
             startClock();
@@ -296,7 +299,7 @@
             }, 1000);
         }
 
-        // --- 1. RENDERIZAÇÃO COMPLETA DO GRÁFICO (CANVAS) ---
+        // --- GRÁFICO (CANVAS) ---
         function initMockChart() {
             priceData = [];
             let basePrice = 83500;
@@ -324,7 +327,6 @@
 
             if (priceData.length === 0) return;
 
-            // Grade de fundo
             ctx.strokeStyle = '#112211';
             ctx.lineWidth = 1;
             for (let y = 0; y < canvas.height; y += 40) {
@@ -334,7 +336,6 @@
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
             }
 
-            // Cálculos de Escala
             const minP = Math.min(...priceData.map(d => d.low));
             const maxP = Math.max(...priceData.map(d => d.high));
             const range = (maxP - minP) || 1;
@@ -343,7 +344,6 @@
             const spacing = canvas.width / priceData.length;
             const candleWidth = spacing * 0.65;
 
-            // Desenho de Candlesticks
             priceData.forEach((d, i) => {
                 const x = i * spacing + spacing / 2;
                 const isGreen = d.close >= d.open;
@@ -357,22 +357,19 @@
                 ctx.strokeStyle = color;
                 ctx.fillStyle = color;
 
-                // Pavio
                 ctx.beginPath();
                 ctx.moveTo(x, highY);
                 ctx.lineTo(x, lowY);
                 ctx.stroke();
 
-                // Corpo
                 const bodyY = Math.min(openY, closeY);
                 const bodyH = Math.max(Math.abs(closeY - openY), 2);
                 ctx.fillRect(x - candleWidth / 2, bodyY, candleWidth, bodyH);
             });
         }
 
-        // --- 2. WEBSOCKET BINANCE (PREÇO + ORDER BOOK CORRIGIDO) ---
+        // --- WEBSOCKET BINANCE (PREÇO & LIVRO COM PRESSÃO) ---
         function initBinanceWebSocket() {
-            // Ajustado endpoint de profundidade para @depth5 (válido na API Binance)
             binanceWebSocket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker/btcusdt@depth5');
             
             binanceWebSocket.onmessage = (event) => {
@@ -399,6 +396,22 @@
         function renderOrderbook(bids, asks) {
             const obContainer = document.getElementById('orderbook');
             if (!obContainer) return;
+
+            // CÁLCULO DE PRESSÃO
+            const totalBidVol = bids.reduce((acc, curr) => acc + parseFloat(curr[1]), 0);
+            const totalAskVol = asks.reduce((acc, curr) => acc + parseFloat(curr[1]), 0);
+            const totalVol = totalBidVol + totalAskVol;
+
+            if (totalVol > 0) {
+                const buyPct = ((totalBidVol / totalVol) * 100).toFixed(1);
+                const sellPct = (100 - buyPct).toFixed(1);
+
+                document.getElementById('buy-pressure-pct').textContent = `COMPRA: ${buyPct}%`;
+                document.getElementById('sell-pressure-pct').textContent = `VENDA: ${sellPct}%`;
+                document.getElementById('buy-pressure-bar').style.width = `${buyPct}%`;
+                document.getElementById('sell-pressure-bar').style.width = `${sellPct}%`;
+            }
+
             let html = '';
             asks.slice(0, 3).reverse().forEach(a => {
                 html += `<div class="flex justify-between text-[#ff3232]"><span>${parseFloat(a[0]).toFixed(1)}</span><span>${parseFloat(a[1]).toFixed(3)}</span></div>`;
@@ -409,7 +422,7 @@
             obContainer.innerHTML = html;
         }
 
-        // --- 3. OKX WEBSOCKET & REST FALLBACK ---
+        // --- OKX WEBSOCKET & REST ---
         function initOKXWebSocket() {
             try {
                 okxWebSocket = new WebSocket('wss://ws.okx.com:8443/ws/v5/public');
@@ -443,7 +456,7 @@
             }
         }
 
-        // --- 4. ALTERNATIVE.ME (FEAR & GREED) ---
+        // --- ALTERNATIVE.ME ---
         async function fetchAlternativeMeFNG() {
             try {
                 const res = await fetch('https://api.alternative.me/fng/');
@@ -465,7 +478,7 @@
             }
         }
 
-        // --- 5. CRYPTOCOMPARE TICKER BAR WITH FALLBACK ---
+        // --- CRYPTOCOMPARE TICKER BAR ---
         async function fetchCryptoCompareTicker() {
             try {
                 const res = await fetch('https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BTC,ETH,SOL,XAU&tsyms=USD');
@@ -485,7 +498,6 @@
                 }
             } catch (e) {}
 
-            // Fallback de demonstração caso CORS/AdBlocker bloqueie
             const demoHtml = `
                 <div class="px-4 inline-block"><span class="text-white font-bold">BTC:</span> $83,500.00 <span style="color: #00ff41">(+2.45%)</span></div>
                 <div class="px-4 inline-block"><span class="text-white font-bold">ETH:</span> $3,450.20 <span style="color: #00ff41">(+1.80%)</span></div>
@@ -495,7 +507,7 @@
             document.getElementById('ticker-bar').innerHTML = demoHtml + demoHtml;
         }
 
-        // --- 6. NEWS FEED WITH FALLBACK ---
+        // --- FEED DE NOTÍCIAS ---
         let rawNewsData = [];
         let currentNewsCategory = 'ALL';
 
@@ -575,7 +587,7 @@
             feedContainer.innerHTML = html || '<div class="text-xs text-[#555] text-center py-4">Sem resultados.</div>';
         }
 
-        // --- 7. MÉTRICAS ON-CHAIN ---
+        // --- MÉTRICAS ON-CHAIN ---
         function fetchOnChainMetrics() {
             document.getElementById('metric-nupl').textContent = "0.48";
             document.getElementById('metric-sopr').textContent = "1.01";
@@ -583,7 +595,7 @@
             document.getElementById('metric-leverage').textContent = "0.225";
         }
 
-        // --- 8. ANÁLISE DE ROMPIMENTOS & CONTROLE ---
+        // --- ROMPIMENTOS & CONTROLES ---
         let activeBreakout = null;
         let falseBreakoutsList = [];
         let realBreakoutsList = [];
@@ -633,7 +645,6 @@
             `;
         }
 
-        // --- CONTROLES DE INTERFACE & CALCULADORA ---
         function setTimeframe(tf, btn) {
             currentTimeframe = tf;
             document.querySelectorAll('.tf-btn').forEach(b => b.className = "tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]");
