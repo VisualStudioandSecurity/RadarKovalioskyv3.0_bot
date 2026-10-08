@@ -1,4 +1,4 @@
-html_content = '''<!doctype html>
+<!doctype html>
 <html lang="pt-br" class="h-full">
 <head>
     <meta charset="UTF-8">
@@ -397,9 +397,7 @@ html_content = '''<!doctype html>
                             recentTraps.slice(0, 5).map(t => `
                                 <div class="flex justify-between items-center text-xs p-1.5 rounded bg-[#050505] border border-[#151515]">
                                     <span class="${t.type === 'BULL_TRAP' ? 'text-[#ff3232]' : 'text-[#00ff41]'} font-bold">
-                                        ${t.type === 'BULL_TRAP' ? '🛑 FALSO ALTA' : '🚀 FALSO BAIXA'}
-                                    </span>
-                                    <span class="text-white font-bold">$${t.level.toFixed(1)}</span>
+                                        ${t.type === 'BULL_TRAP' ? '🛑 FALSO ALTA' : '🚀 FALSO BAIXA'}                                     </span>                                     <span class="text-white font-bold">$${t.level.toFixed(1)}</span>
                                     <span class="text-[#666] text-[10px]">${new Date(t.time).toLocaleTimeString('pt-BR')}</span>
                                 </div>
                             `).join('')
@@ -434,9 +432,7 @@ html_content = '''<!doctype html>
                             recentReals.slice(0, 5).map(t => `
                                 <div class="flex justify-between items-center text-xs p-1.5 rounded bg-[#050505] border border-[#151515]">
                                     <span class="${t.type === 'BULL_BREAKOUT' ? 'text-[#00ff41]' : 'text-[#ff3232]'} font-bold">
-                                        ${t.type === 'BULL_BREAKOUT' ? '🚀 ALTA CONFIRMADA' : '💥 BAIXA CONFIRMADA'}
-                                    </span>
-                                    <span class="text-white font-bold">$${t.level.toFixed(1)}</span>
+                                        ${t.type === 'BULL_BREAKOUT' ? '🚀 ALTA CONFIRMADA' : '💥 BAIXA CONFIRMADA'}                                     </span>                                     <span class="text-white font-bold">$${t.level.toFixed(1)}</span>
                                     <span class="text-[#666] text-[10px]">${new Date(t.time).toLocaleTimeString('pt-BR')}</span>
                                 </div>
                             `).join('')
@@ -1039,9 +1035,3 @@ html_content = '''<!doctype html>
     </script>
 </body>
 </html>
-'''
-
-with open("index.html", "w", encoding="utf-8") as f:
-    f.write(html_content)
-
-print("File index.html created successfully!")
