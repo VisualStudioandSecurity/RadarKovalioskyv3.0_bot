@@ -2,7 +2,6 @@
 <html lang="pt-br" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visual Cripto Hub | Terminal</title>
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -15,7 +14,6 @@
         }
         @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .ticker-scroll { animation: ticker-scroll 40s linear infinite; }
-        .ticker-scroll:hover { animation-play-state: paused; }
         .tf-btn.active { background: #00ff41 !important; color: #050505 !important; font-weight: bold; }
         .pos-btn.active-long { background: #00ff41 !important; color: #050505 !important; font-weight: bold; }
         .pos-btn.active-short { background: #ff3232 !important; color: #ffffff !important; font-weight: bold; }
@@ -31,7 +29,6 @@
     <div id="app-wrapper" class="h-full flex flex-col relative">
         <div class="scan-line"></div>
 
-        <!-- HEADER -->
         <header class="relative z-10 flex items-center justify-between px-4 py-2 border-b border-[#00ff41]" style="background: #0a0a0a;">
             <div class="flex items-center gap-3">
                 <div class="w-2.5 h-2.5 rounded-full pulse-glow" style="background: #00ff41; box-shadow: 0 0 8px #00ff41;"></div>
@@ -45,16 +42,11 @@
             </div>
         </header>
 
-        <!-- TICKER BAR -->
         <div class="relative z-10 overflow-hidden border-b border-[#111]" style="background: #080808;">
-            <div class="ticker-scroll flex whitespace-nowrap py-2 text-xs font-medium" id="ticker-bar">
-                <div class="px-4 text-[#555]">Carregando cotações de mercado...</div>
-            </div>
+            <div class="ticker-scroll flex whitespace-nowrap py-2 text-xs font-medium" id="ticker-bar"></div>
         </div>
 
-        <!-- CONTEÚDO PRINCIPAL -->
         <main class="flex-1 relative z-10 flex overflow-hidden">
-            <!-- PAINEL DO GRÁFICO -->
             <div class="flex-1 flex flex-col">
                 <div class="flex items-center justify-between px-4 py-2 border-b border-[#111]">
                     <div class="flex items-center gap-3">
@@ -66,20 +58,19 @@
                     </div>
                 </div>
 
-                <div class="flex-1 relative bg-[#050505]" id="canvas-container">
+                <div class="flex-1 relative bg-[#050505]">
                     <canvas id="chart-canvas" class="w-full h-full block"></canvas>
                 </div>
 
                 <div class="flex items-center gap-2 px-4 py-2 border-t border-[#111]">
                     <span class="text-xs text-[#666] font-bold mr-2">TIMEFRAME:</span>
-                    <button onclick="setTimeframe('M30')" id="tf-M30" class="tf-btn text-xs px-3.5 py-1 rounded active bg-[#111] text-[#777]">M30</button>
-                    <button onclick="setTimeframe('H1')" id="tf-H1" class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H1</button>
-                    <button onclick="setTimeframe('H4')" id="tf-H4" class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H4</button>
-                    <button onclick="setTimeframe('D1')" id="tf-D1" class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">D1</button>
+                    <button class="tf-btn text-xs px-3.5 py-1 rounded active bg-[#111] text-[#777]">M30</button>
+                    <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H1</button>
+                    <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H4</button>
+                    <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">D1</button>
                 </div>
             </div>
 
-            <!-- BARRA LATERAL DA DIREITA -->
             <aside class="w-84 border-l border-[#111] flex flex-col bg-[#080808] overflow-y-auto">
                 <!-- MODO DO MOTOR -->
                 <div class="p-3.5 border-b border-[#111]">
@@ -178,7 +169,7 @@
                                 <label class="text-xs text-[#777]">ENTRADA ($)</label>
                                 <button onclick="useCurrentPrice()" class="text-xs text-[#00ff41] hover:underline font-bold">[ATUAL]</button>
                             </div>
-                            <input type="number" id="calc-entry" step="0.1" class="w-full bg-[#050505] border border-[#222] text-[#00ff41] text-xs px-2.5 py-1.5 rounded focus:outline-none focus:border-[#00ff41] font-bold" oninput="calculateRiskReward(); renderAll();">
+                            <input type="number" id="calc-entry" step="0.1" class="w-full bg-[#050505] border border-[#222] text-[#00ff41] text-xs px-2.5 py-1.5 rounded focus:outline-none focus:border-[#00ff41] font-bold" oninput="calculateRiskReward()">
                         </div>
 
                         <div>
@@ -189,11 +180,11 @@
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <label class="text-xs text-[#ff3232] block mb-1">STOP LOSS (%)</label>
-                                <input type="number" id="calc-sl-pct" value="1.5" step="0.1" class="w-full bg-[#050505] border border-[#ff323240] text-[#ff3232] text-xs px-2 py-1.5 rounded focus:outline-none focus:border-[#ff3232] font-bold" oninput="calculateRiskReward(); renderAll();">
+                                <input type="number" id="calc-sl-pct" value="1.5" step="0.1" class="w-full bg-[#050505] border border-[#ff323240] text-[#ff3232] text-xs px-2 py-1.5 rounded focus:outline-none focus:border-[#ff3232] font-bold" oninput="calculateRiskReward()">
                             </div>
                             <div>
                                 <label class="text-xs text-[#00ff41] block mb-1">TAKE PROFIT (%)</label>
-                                <input type="number" id="calc-tp-pct" value="3.0" step="0.1" class="w-full bg-[#050505] border border-[#00ff4140] text-[#00ff41] text-xs px-2 py-1.5 rounded focus:outline-none focus:border-[#00ff41] font-bold" oninput="calculateRiskReward(); renderAll();">
+                                <input type="number" id="calc-tp-pct" value="3.0" step="0.1" class="w-full bg-[#050505] border border-[#00ff4140] text-[#00ff41] text-xs px-2 py-1.5 rounded focus:outline-none focus:border-[#00ff41] font-bold" oninput="calculateRiskReward()">
                             </div>
                         </div>
 
@@ -223,13 +214,12 @@
                 </div>
             </aside>
         </main>
-
+        
         <footer class="relative z-10 text-center py-1 border-t border-[#111] bg-[#080808]">
             <span class="text-xs text-[#1a3a1a]">© 2026 Visual Studio | Kovaliosky DeV</span>
         </footer>
     </div>
 
-    <!-- SCRIPT DE LÓGICA DO TERMINAL -->
     <script>
         let priceData = [];
         let currentTimeframe = 'M30';
@@ -506,6 +496,35 @@
             if (clockEl) clockEl.textContent = new Date().toLocaleTimeString('pt-BR');
         }
 
+        async function fetchTicker() {
+            try {
+                const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+                const data = await res.json();
+                const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'AVAXUSDT'];
+                const filtered = data.filter(item => symbols.includes(item.symbol));
+                
+                let html = '';
+                filtered.forEach(t => {
+                    const pct = parseFloat(t.priceChangePercent);
+                    const isPos = pct >= 0;
+                    const colorClass = isPos ? 'text-[#00ff41]' : 'text-[#ff3232]';
+                    const sign = isPos ? '+' : '';
+                    html += `
+                        <div class="inline-flex items-center gap-2 px-4 border-r border-[#151515]">
+                            <span class="text-white font-bold">${t.symbol.replace('USDT', '')}</span>
+                            <span class="text-[#888]">$${parseFloat(t.lastPrice).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 })}</span>
+                            <span class="${colorClass} font-semibold">${sign}${pct.toFixed(2)}%</span>
+                        </div>
+                    `;
+                });
+                
+                const tickerEl = document.getElementById('ticker-bar');
+                if (tickerEl) tickerEl.innerHTML = html + html;
+            } catch (e) {
+                console.error("Ticker Error", e);
+            }
+        }
+
         async function fetchCandles(interval = '30m') {
             try {
                 const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=80`);
@@ -519,41 +538,30 @@
                     entryInput.value = priceData[priceData.length - 1].close.toFixed(1);
                 }
                 
+                if (priceData.length > 0) updateHeaderPrice(priceData[priceData.length - 1].close);
                 calculateRiskReward();
                 renderAll();
                 renderTrapStats();
             } catch (e) { console.error("API Error", e); }
         }
 
-        function setTimeframe(tf) {
-            if (!timeframeMap[tf]) return;
-            currentTimeframe = tf;
-            document.querySelectorAll('.tf-btn').forEach(b => {
-                b.className = "tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]";
-            });
-            const activeBtn = document.getElementById(`tf-${tf}`);
-            if (activeBtn) activeBtn.className = "tf-btn text-xs px-3.5 py-1 rounded active bg-[#00ff41] text-[#050505] font-bold";
+        function updateHeaderPrice(currentPrice) {
+            const priceEl = document.getElementById('price-display');
+            const changeEl = document.getElementById('change-display');
+            if (!priceEl) return;
 
-            fetchCandles(timeframeMap[tf]);
-            initKlineWS();
-        }
-
-        function updatePriceHeader(price) {
-            const pEl = document.getElementById('price-display');
-            const cEl = document.getElementById('change-display');
-            if (!pEl) return;
-
-            const prevPrice = priceData.length > 1 ? priceData[priceData.length - 2].close : price;
-            const firstPrice = priceData.length > 0 ? priceData[0].open : price;
-            const changePct = ((price - firstPrice) / firstPrice) * 100;
-
-            pEl.textContent = `$${price.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
-            pEl.style.color = price >= prevPrice ? '#00ff41' : '#ff3232';
-
-            if (cEl) {
-                cEl.textContent = `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%`;
-                cEl.style.backgroundColor = changePct >= 0 ? 'rgba(0, 255, 65, 0.15)' : 'rgba(255, 50, 50, 0.15)';
-                cEl.style.color = changePct >= 0 ? '#00ff41' : '#ff3232';
+            priceEl.textContent = `$${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
+            
+            if (priceData.length > 1) {
+                const openPrice = priceData[0].open;
+                const diff = currentPrice - openPrice;
+                const pct = (diff / openPrice) * 100;
+                const isPos = pct >= 0;
+                
+                if (changeEl) {
+                    changeEl.textContent = `${isPos ? '+' : ''}${pct.toFixed(2)}%`;
+                    changeEl.className = `text-xs font-bold px-2 py-1 rounded ${isPos ? 'bg-[#00ff4120] text-[#00ff41]' : 'bg-[#ff323220] text-[#ff3232]'}`;
+                }
             }
         }
 
@@ -565,14 +573,7 @@
             klineWs.onmessage = (e) => {
                 const msg = JSON.parse(e.data);
                 const k = msg.k;
-                const newCandle = { 
-                    time: k.t, 
-                    open: parseFloat(k.o), 
-                    high: parseFloat(k.h), 
-                    low: parseFloat(k.l), 
-                    close: parseFloat(k.c), 
-                    volume: parseFloat(k.v) 
-                };
+                const newCandle = { time: k.t, open: parseFloat(k.o), high: parseFloat(k.h), low: parseFloat(k.l), close: parseFloat(k.c), volume: parseFloat(k.v) };
                 
                 if (priceData.length > 0 && priceData[priceData.length - 1].time === k.t) {
                     priceData[priceData.length - 1] = newCandle;
@@ -581,7 +582,7 @@
                     if (priceData.length > 100) priceData.shift();
                 }
 
-                updatePriceHeader(newCandle.close);
+                updateHeaderPrice(newCandle.close);
                 detectBreakouts(newCandle.close);
                 renderAll();
             };
@@ -593,61 +594,53 @@
 
             depthWs.onmessage = (e) => {
                 const data = JSON.parse(e.data);
-                renderOrderBook(data.bids, data.asks);
+                const bids = data.bids.slice(0, 5);
+                const asks = data.asks.slice(0, 5).reverse();
+                renderOrderbook(asks, bids);
             };
         }
 
-        function renderOrderBook(bids, asks) {
-            const obEl = document.getElementById('orderbook');
-            if (!obEl || !bids || !asks) return;
-
-            let html = '';
-
-            // Asks (Sells) - top 5 em ordem decrescente
-            const topAsks = asks.slice(0, 5).reverse();
-            const maxAskVol = Math.max(...topAsks.map(a => parseFloat(a[1])), 0.0001);
-
-            topAsks.forEach(a => {
+        function renderOrderbook(asks, bids) {
+            const obContainer = document.getElementById('orderbook');
+            if (!obContainer) return;
+            
+            let maxQty = 0;
+            asks.forEach(a => { if (parseFloat(a[1]) > maxQty) maxQty = parseFloat(a[1]); });
+            bids.forEach(b => { if (parseFloat(b[1]) > maxQty) maxQty = parseFloat(b[1]); });
+            if (maxQty === 0) maxQty = 1;
+            
+            let html = '<div class="space-y-0.5">';
+            
+            asks.forEach(a => {
                 const price = parseFloat(a[0]).toFixed(1);
                 const qty = parseFloat(a[1]).toFixed(3);
-                const pct = Math.min((parseFloat(a[1]) / maxAskVol) * 100, 100);
+                const pct = Math.min(Math.round((parseFloat(a[1]) / maxQty) * 100), 100);
                 html += `
-                    <div class="relative flex justify-between px-2 py-0.5 rounded overflow-hidden" style="background: linear-gradient(90deg, rgba(255,50,50,0.18) ${pct}%, transparent ${pct}%);">
-                        <span class="text-[#ff3232] font-bold z-10">$${price}</span>
-                        <span class="text-[#aaa] z-10 font-mono">${qty} BTC</span>
+                    <div class="relative flex justify-between px-1.5 py-0.5 rounded overflow-hidden">
+                        <div class="absolute right-0 top-0 bottom-0 bg-[#ff323215] transition-all" style="width: ${pct}%"></div>
+                        <span class="relative z-10 text-[#ff3232] font-bold">$${price}</span>
+                        <span class="relative z-10 text-[#888]">${qty} BTC</span>
                     </div>
                 `;
             });
-
-            // Spread Divider
-            if (bids.length > 0 && asks.length > 0) {
-                const bestBid = parseFloat(bids[0][0]);
-                const bestAsk = parseFloat(asks[0][0]);
-                const spread = (bestAsk - bestBid).toFixed(1);
-                html += `
-                    <div class="text-center py-1 text-[10px] text-[#666] font-bold border-y border-[#151515]">
-                        SPREAD: $${spread}
-                    </div>
-                `;
-            }
-
-            // Bids (Buys) - top 5
-            const topBids = bids.slice(0, 5);
-            const maxBidVol = Math.max(...topBids.map(b => parseFloat(b[1])), 0.0001);
-
-            topBids.forEach(b => {
+            
+            html += '<div class="my-1 border-t border-[#1a1a1a]"></div>';
+            
+            bids.forEach(b => {
                 const price = parseFloat(b[0]).toFixed(1);
                 const qty = parseFloat(b[1]).toFixed(3);
-                const pct = Math.min((parseFloat(b[1]) / maxBidVol) * 100, 100);
+                const pct = Math.min(Math.round((parseFloat(b[1]) / maxQty) * 100), 100);
                 html += `
-                    <div class="relative flex justify-between px-2 py-0.5 rounded overflow-hidden" style="background: linear-gradient(90deg, rgba(0,255,65,0.18) ${pct}%, transparent ${pct}%);">
-                        <span class="text-[#00ff41] font-bold z-10">$${price}</span>
-                        <span class="text-[#aaa] z-10 font-mono">${qty} BTC</span>
+                    <div class="relative flex justify-between px-1.5 py-0.5 rounded overflow-hidden">
+                        <div class="absolute right-0 top-0 bottom-0 bg-[#00ff4115] transition-all" style="width: ${pct}%"></div>
+                        <span class="relative z-10 text-[#00ff41] font-bold">$${price}</span>
+                        <span class="relative z-10 text-[#888]">${qty} BTC</span>
                     </div>
                 `;
             });
-
-            obEl.innerHTML = html;
+            
+            html += '</div>';
+            obContainer.innerHTML = html;
         }
 
         function initTradeWS() {
@@ -655,19 +648,19 @@
             tradeWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
 
             tradeWs.onmessage = (e) => {
-                const trade = JSON.parse(e.data);
-                const now = Date.now();
+                const data = JSON.parse(e.data);
+                const price = parseFloat(data.p);
+                const qty = parseFloat(data.q);
+                const isBuyerMaker = data.m;
+
                 orderBuffer.push({
-                    price: parseFloat(trade.p),
-                    qty: parseFloat(trade.q),
-                    isBuyerMaker: trade.m,
-                    time: now
+                    time: Date.now(),
+                    qty: qty,
+                    isBuyerMaker: isBuyerMaker,
+                    price: price
                 });
 
-                if (orderBuffer.length > currentEngineConfig.maxOrders * 2) {
-                    orderBuffer = orderBuffer.slice(-currentEngineConfig.maxOrders);
-                }
-
+                detectBreakouts(price);
                 analyzeEngineWithFilters();
             };
         }
@@ -676,74 +669,70 @@
             const now = Date.now();
             const cutoff = now - (currentEngineConfig.maxOrderAgeSeconds * 1000);
 
-            const validOrders = orderBuffer.filter(o => o.time >= cutoff && o.qty >= currentEngineConfig.minOrderQtyBTC);
+            orderBuffer = orderBuffer.filter(o => o.time >= cutoff);
+            const validOrders = orderBuffer.filter(o => o.qty >= currentEngineConfig.minOrderQtyBTC);
 
             let buyVol = 0;
             let sellVol = 0;
 
             validOrders.forEach(o => {
-                if (!o.isBuyerMaker) {
-                    buyVol += o.qty;
-                } else {
-                    sellVol += o.qty;
-                }
+                if (o.isBuyerMaker) sellVol += o.qty;
+                else buyVol += o.qty;
             });
 
             const totalVol = buyVol + sellVol;
-            const buyPct = totalVol > 0 ? (buyVol / totalVol) * 100 : 50;
-            const sellPct = totalVol > 0 ? (sellVol / totalVol) * 100 : 50;
+            let buyPct = 50;
+            let sellPct = 50;
+
+            if (totalVol > 0) {
+                buyPct = Math.round((buyVol / totalVol) * 100);
+                sellPct = 100 - buyPct;
+            }
 
             let newState = 'NEUTRAL';
-            if (buyPct >= currentEngineConfig.signalThresholdPct) {
-                newState = 'BULLISH';
-            } else if (sellPct >= currentEngineConfig.signalThresholdPct) {
-                newState = 'BEARISH';
-            }
+            if (buyPct >= currentEngineConfig.signalThresholdPct) newState = 'BULLISH';
+            else if (sellPct >= currentEngineConfig.signalThresholdPct) newState = 'BEARISH';
 
             if (newState !== currentPressureState) {
                 currentPressureState = newState;
-                pressureStartTime = now;
+                pressureStartTime = Date.now();
             }
 
-            const duration = formatDuration(now - pressureStartTime);
-            renderSignalPanel(buyPct, sellPct, buyVol, sellVol, newState, duration, validOrders.length);
-        }
+            const durationMs = Date.now() - pressureStartTime;
 
-        function renderSignalPanel(buyPct, sellPct, buyVol, sellVol, state, duration, count) {
-            const pEl = document.getElementById('signal-panel');
-            if (!pEl) return;
+            const signalPanel = document.getElementById('signal-panel');
+            if (signalPanel) {
+                let statusBadgeHtml = '';
+                if (currentPressureState === 'BULLISH') {
+                    statusBadgeHtml = `<span class="px-2 py-0.5 rounded bg-[#00ff4120] text-[#00ff41] font-bold border border-[#00ff41]">🚀 PRESSÃO COMPRADORA (${buyPct}%)</span>`;
+                } else if (currentPressureState === 'BEARISH') {
+                    statusBadgeHtml = `<span class="px-2 py-0.5 rounded bg-[#ff323220] text-[#ff3232] font-bold border border-[#ff3232]">💥 PRESSÃO VENDEDORA (${sellPct}%)</span>`;
+                } else {
+                    statusBadgeHtml = `<span class="px-2 py-0.5 rounded bg-[#333] text-[#aaa] font-bold border border-[#444]">⚖️ MERCADO NEUTRO</span>`;
+                }
 
-            let stateColor = '#777';
-            let stateLabel = 'NEUTRO';
-            let stateBg = '#111';
+                signalPanel.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-[#777]">SINAL:</span>
+                        ${statusBadgeHtml}
+                    </div>
 
-            if (state === 'BULLISH') {
-                stateColor = '#00ff41';
-                stateLabel = '🚀 PRESSÃO COMPRADORA (BULL)';
-                stateBg = 'rgba(0,255,65,0.1)';
-            } else if (state === 'BEARISH') {
-                stateColor = '#ff3232';
-                stateLabel = '💥 PRESSÃO VENDEDORA (BEAR)';
-                stateBg = 'rgba(255,50,50,0.1)';
+                    <div class="w-full bg-[#111] h-2.5 rounded-full overflow-hidden flex mb-2">
+                        <div class="bg-[#00ff41] h-full transition-all duration-300" style="width: ${buyPct}%"></div>
+                        <div class="bg-[#ff3232] h-full transition-all duration-300" style="width: ${sellPct}%"></div>
+                    </div>
+
+                    <div class="flex justify-between text-[11px] mb-2 font-mono">
+                        <span class="text-[#00ff41]">COMPRA: ${buyVol.toFixed(2)} BTC (${buyPct}%)</span>
+                        <span class="text-[#ff3232]">VENDA: ${sellVol.toFixed(2)} BTC (${sellPct}%)</span>
+                    </div>
+
+                    <div class="pt-2 border-t border-[#151515] flex justify-between text-[10px] text-[#666]">
+                        <span>ORDENS FILTRADAS: <strong class="text-white">${validOrders.length}</strong></span>
+                        <span>DURAÇÃO DO SINAL: <strong class="text-white">${formatDuration(durationMs)}</strong></span>
+                    </div>
+                `;
             }
-
-            pEl.innerHTML = `
-                <div class="p-2 rounded mb-2 border text-center" style="background: ${stateBg}; border-color: ${stateColor}40;">
-                    <div class="text-xs font-bold" style="color: ${stateColor}">${stateLabel}</div>
-                    <div class="text-[10px] text-[#aaa] mt-0.5">Duração: <span class="text-white font-bold">${duration}</span> (${count} ordens válidas)</div>
-                </div>
-
-                <div class="space-y-1 text-xs">
-                    <div class="flex justify-between font-bold text-[11px]">
-                        <span class="text-[#00ff41]">COMPRA: ${buyPct.toFixed(1)}% (${buyVol.toFixed(2)} BTC)</span>
-                        <span class="text-[#ff3232]">VENDA: ${sellPct.toFixed(1)}% (${sellVol.toFixed(2)} BTC)</span>
-                    </div>
-                    <div class="w-full h-2.5 bg-[#111] rounded-full overflow-hidden flex border border-[#222]">
-                        <div class="h-full bg-[#00ff41] transition-all duration-300" style="width: ${buyPct}%"></div>
-                        <div class="h-full bg-[#ff3232] transition-all duration-300" style="width: ${sellPct}%"></div>
-                    </div>
-                </div>
-            `;
         }
 
         function setPosType(type) {
@@ -759,18 +748,14 @@
                 if (btnLong) btnLong.className = "pos-btn flex-1 text-xs py-1.5 rounded border border-[#333] text-[#666]";
             }
             calculateRiskReward();
-            renderAll();
         }
 
         function useCurrentPrice() {
             if (priceData.length > 0) {
-                const currentPrice = priceData[priceData.length - 1].close;
+                const current = priceData[priceData.length - 1].close;
                 const entryInput = document.getElementById('calc-entry');
-                if (entryInput) {
-                    entryInput.value = currentPrice.toFixed(1);
-                    calculateRiskReward();
-                    renderAll();
-                }
+                if (entryInput) entryInput.value = current.toFixed(1);
+                calculateRiskReward();
             }
         }
 
@@ -780,7 +765,7 @@
             const slPct = parseFloat(document.getElementById('calc-sl-pct')?.value) || 0;
             const tpPct = parseFloat(document.getElementById('calc-tp-pct')?.value) || 0;
 
-            if (entry <= 0) return;
+            if (entry === 0 || capital === 0) return;
 
             let slPrice = 0;
             let tpPrice = 0;
@@ -793,244 +778,148 @@
                 tpPrice = entry * (1 - tpPct / 100);
             }
 
-            const lossVal = capital * (slPct / 100);
-            const winVal = capital * (tpPct / 100);
-            const rrRatio = slPct > 0 ? (tpPct / slPct).toFixed(2) : '0';
+            const slVal = capital * (slPct / 100);
+            const tpVal = capital * (tpPct / 100);
+            const rr = slPct > 0 ? (tpPct / slPct).toFixed(2) : '0';
 
-            document.getElementById('res-sl-price').textContent = `$${slPrice.toFixed(1)}`;
-            document.getElementById('res-sl-val').textContent = `-$${lossVal.toFixed(2)}`;
-            document.getElementById('res-tp-price').textContent = `$${tpPrice.toFixed(1)}`;
-            document.getElementById('res-tp-val').textContent = `+$${winVal.toFixed(2)}`;
-            document.getElementById('res-rr').textContent = `1 : ${rrRatio}`;
+            const resSlPrice = document.getElementById('res-sl-price');
+            const resSlVal = document.getElementById('res-sl-val');
+            const resTpPrice = document.getElementById('res-tp-price');
+            const resTpVal = document.getElementById('res-tp-val');
+            const resRr = document.getElementById('res-rr');
+
+            if (resSlPrice) resSlPrice.textContent = `$${slPrice.toFixed(1)}`;
+            if (resSlVal) resSlVal.textContent = `-$${slVal.toFixed(2)}`;
+            if (resTpPrice) resTpPrice.textContent = `$${tpPrice.toFixed(1)}`;
+            if (resTpVal) resTpVal.textContent = `+$${tpVal.toFixed(2)}`;
+            if (resRr) resRr.textContent = `1 : ${rr}`;
         }
 
-        async function initTicker() {
-            const tickerEl = document.getElementById('ticker-bar');
-            if (!tickerEl) return;
-            
-            async function updateTicker() {
-                try {
-                    const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","ADAUSDT","DOGEUSDT"]');
-                    const data = await res.json();
-                    
-                    let itemsHtml = '';
-                    const items = [...data, ...data];
-                    
-                    items.forEach(t => {
-                        const symbol = t.symbol.replace('USDT', '');
-                        const price = parseFloat(t.lastPrice);
-                        const change = parseFloat(t.priceChangePercent);
-                        const color = change >= 0 ? '#00ff41' : '#ff3232';
-                        
-                        itemsHtml += `
-                            <div class="inline-flex items-center gap-2 mx-4">
-                                <span class="text-white font-bold">${symbol}:</span>
-                                <span class="font-bold" style="color: ${color}">$${price < 1 ? price.toFixed(4) : price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                <span class="text-[10px] px-1 rounded font-bold" style="background: ${color}20; color: ${color}">${change >= 0 ? '+' : ''}${change.toFixed(2)}%</span>
-                            </div>
-                        `;
-                    });
-                    tickerEl.innerHTML = itemsHtml;
-                } catch(e) { console.error('Ticker error:', e); }
-            }
-            
-            updateTicker();
-            setInterval(updateTicker, 15000);
-        }
+        function renderChart() {
+            if (!canvas || !ctx || priceData.length === 0) return;
 
-        // --- RENDERIZAÇÃO DO GRÁFICO EM CANVAS ---
-        function resizeCanvas() {
-            if (!canvas) return;
-            const container = document.getElementById('canvas-container');
-            if (!container) return;
+            const parent = canvas.parentElement;
+            canvas.width = parent.clientWidth;
+            canvas.height = parent.clientHeight;
 
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = container.clientWidth * dpr;
-            canvas.height = container.clientHeight * dpr;
-            if (ctx) ctx.scale(dpr, dpr);
-
-            renderAll();
-        }
-
-        function renderAll() {
-            if (!ctx || !canvas) return;
-
-            const container = document.getElementById('canvas-container');
-            if (!container) return;
-
-            const width = container.clientWidth;
-            const height = container.clientHeight;
-
-            ctx.clearRect(0, 0, width, height);
-
-            if (!priceData || priceData.length === 0) {
-                ctx.fillStyle = '#555';
-                ctx.font = '12px JetBrains Mono';
-                ctx.textAlign = 'center';
-                ctx.fillText('A carregar dados do gráfico...', width / 2, height / 2);
-                return;
-            }
-
+            const w = canvas.width;
+            const h = canvas.height;
             const paddingRight = 65;
-            const paddingBottom = 30;
-            const chartWidth = width - paddingRight;
-            const chartHeight = height - paddingBottom;
-            const volumeAreaHeight = chartHeight * 0.2;
-            const candlesAreaHeight = chartHeight * 0.8;
+            const paddingBottom = 25;
+            const paddingTop = 20;
+            const chartWidth = w - paddingRight;
+            const chartHeight = h - paddingTop - paddingBottom;
 
-            const candles = priceData.slice(-60);
-            const n = candles.length;
+            ctx.clearRect(0, 0, w, h);
 
-            let minPrice = Math.min(...candles.map(c => c.low));
-            let maxPrice = Math.max(...candles.map(c => c.high));
-            const priceRange = (maxPrice - minPrice) || 1;
-            minPrice -= priceRange * 0.05;
-            maxPrice += priceRange * 0.05;
+            let minPrice = Infinity;
+            let maxPrice = -Infinity;
+            priceData.forEach(c => {
+                if (c.low < minPrice) minPrice = c.low;
+                if (c.high > maxPrice) maxPrice = c.high;
+            });
 
-            const maxVol = Math.max(...candles.map(c => c.volume), 1);
+            const range = (maxPrice - minPrice) || 1;
+            const candleWidth = chartWidth / priceData.length;
 
-            // Grelha de Preços Horizontal
-            ctx.strokeStyle = '#111';
+            const getY = (p) => paddingTop + chartHeight - ((p - minPrice) / range) * chartHeight;
+
+            // Draw Grid Lines
+            ctx.strokeStyle = '#111111';
             ctx.lineWidth = 1;
-            ctx.fillStyle = '#666';
-            ctx.font = '10px JetBrains Mono';
-            ctx.textAlign = 'left';
-
-            const gridSteps = 5;
+            const gridSteps = 6;
             for (let i = 0; i <= gridSteps; i++) {
-                const y = (candlesAreaHeight / gridSteps) * i;
-                const p = maxPrice - ((maxPrice - minPrice) / gridSteps) * i;
-
+                const p = minPrice + (range / gridSteps) * i;
+                const y = getY(p);
                 ctx.beginPath();
                 ctx.moveTo(0, y);
                 ctx.lineTo(chartWidth, y);
                 ctx.stroke();
 
-                ctx.fillText(`$${p.toFixed(1)}`, chartWidth + 8, y + 3);
+                ctx.fillStyle = '#444444';
+                ctx.font = '10px JetBrains Mono';
+                ctx.fillText(p.toFixed(1), chartWidth + 5, y + 3);
             }
 
-            // Grelha Temporal Vertical
-            const candleWidth = chartWidth / n;
-            const stepTime = Math.max(1, Math.floor(n / 6));
+            // Draw Candlesticks
+            priceData.forEach((c, idx) => {
+                const x = idx * candleWidth + candleWidth / 2;
+                const openY = getY(c.open);
+                const closeY = getY(c.close);
+                const highY = getY(c.high);
+                const lowY = getY(c.low);
 
-            for (let i = 0; i < n; i += stepTime) {
-                const x = i * candleWidth + candleWidth / 2;
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, chartHeight);
-                ctx.stroke();
-
-                const d = new Date(candles[i].time);
-                const timeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                ctx.fillText(timeStr, x - 15, height - 10);
-            }
-
-            // Desenhar Candlesticks & Volume
-            candles.forEach((c, i) => {
-                const x = i * candleWidth + candleWidth / 2;
                 const isGreen = c.close >= c.open;
                 const color = isGreen ? '#00ff41' : '#ff3232';
 
-                // Volume Bar
-                const volHeight = (c.volume / maxVol) * volumeAreaHeight;
-                ctx.fillStyle = isGreen ? 'rgba(0,255,65,0.15)' : 'rgba(255,50,50,0.15)';
-                ctx.fillRect(x - candleWidth * 0.35, chartHeight - volHeight, candleWidth * 0.7, volHeight);
-
-                // Candle Wicks (Pavio)
-                const yHigh = candlesAreaHeight - ((c.high - minPrice) / (maxPrice - minPrice)) * candlesAreaHeight;
-                const yLow = candlesAreaHeight - ((c.low - minPrice) / (maxPrice - minPrice)) * candlesAreaHeight;
-
+                // Wick
                 ctx.strokeStyle = color;
-                ctx.lineWidth = 1.2;
+                ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(x, yHigh);
-                ctx.lineTo(x, yLow);
+                ctx.moveTo(x, highY);
+                ctx.lineTo(x, lowY);
                 ctx.stroke();
 
-                // Candle Body (Corpo)
-                const yOpen = candlesAreaHeight - ((c.open - minPrice) / (maxPrice - minPrice)) * candlesAreaHeight;
-                const yClose = candlesAreaHeight - ((c.close - minPrice) / (maxPrice - minPrice)) * candlesAreaHeight;
-                const bodyY = Math.min(yOpen, yClose);
-                const bodyHeight = Math.max(Math.abs(yClose - yOpen), 2);
-
+                // Body
+                const bodyTop = Math.min(openY, closeY);
+                const bodyHeight = Math.max(Math.abs(closeY - openY), 1);
                 ctx.fillStyle = color;
-                ctx.fillRect(x - candleWidth * 0.35, bodyY, candleWidth * 0.7, bodyHeight);
+                ctx.fillRect(x - candleWidth * 0.35, bodyTop, candleWidth * 0.7, bodyHeight);
             });
 
-            // Linha do Preço Atual
-            if (candles.length > 0) {
-                const lastClose = candles[candles.length - 1].close;
-                const yCurrent = candlesAreaHeight - ((lastClose - minPrice) / (maxPrice - minPrice)) * candlesAreaHeight;
-
-                ctx.strokeStyle = '#00ff4188';
-                ctx.setLineDash([4, 4]);
+            // Draw Current Price Line
+            const lastCandle = priceData[priceData.length - 1];
+            if (lastCandle) {
+                const lastY = getY(lastCandle.close);
+                ctx.strokeStyle = '#00ff41';
+                ctx.setLineDash([3, 3]);
                 ctx.beginPath();
-                ctx.moveTo(0, yCurrent);
-                ctx.lineTo(chartWidth, yCurrent);
+                ctx.moveTo(0, lastY);
+                ctx.lineTo(chartWidth, lastY);
                 ctx.stroke();
                 ctx.setLineDash([]);
 
-                // Badge Preço
                 ctx.fillStyle = '#00ff41';
-                ctx.fillRect(chartWidth + 2, yCurrent - 10, paddingRight - 4, 20);
+                ctx.fillRect(chartWidth, lastY - 9, paddingRight, 18);
                 ctx.fillStyle = '#050505';
                 ctx.font = 'bold 10px JetBrains Mono';
-                ctx.fillText(`$${lastClose.toFixed(1)}`, chartWidth + 6, yCurrent + 3);
-            }
-
-            // Desenhar Níveis SL/TP se Calculadora Tiver Entrada
-            const entryVal = parseFloat(document.getElementById('calc-entry')?.value);
-            const slVal = parseFloat(document.getElementById('calc-sl-pct')?.value);
-            const tpVal = parseFloat(document.getElementById('calc-tp-pct')?.value);
-
-            if (entryVal && entryVal >= minPrice && entryVal <= maxPrice) {
-                const yEntry = candlesAreaHeight - ((entryVal - minPrice) / (maxPrice - minPrice)) * candlesAreaHeight;
-
-                ctx.strokeStyle = '#3b82f6';
-                ctx.setLineDash([2, 2]);
-                ctx.beginPath();
-                ctx.moveTo(0, yEntry);
-                ctx.lineTo(chartWidth, yEntry);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                ctx.fillStyle = '#3b82f6';
-                ctx.font = 'bold 10px JetBrains Mono';
-                ctx.fillText(`ENTRADA: $${entryVal.toFixed(1)}`, 10, yEntry - 4);
-
-                // SL & TP lines
-                let slPrice = posType === 'LONG' ? entryVal * (1 - slVal / 100) : entryVal * (1 + slVal / 100);
-                let tpPrice = posType === 'LONG' ? entryVal * (1 + tpVal / 100) : entryVal * (1 - tpVal / 100);
-
-                if (slPrice >= minPrice && slPrice <= maxPrice) {
-                    const ySL = candlesAreaHeight - ((slPrice - minPrice) / (maxPrice - minPrice)) * candlesAreaHeight;
-                    ctx.strokeStyle = '#ff3232';
-                    ctx.beginPath(); ctx.moveTo(0, ySL); ctx.lineTo(chartWidth, ySL); ctx.stroke();
-                    ctx.fillStyle = '#ff3232'; ctx.fillText(`SL: $${slPrice.toFixed(1)}`, 10, ySL - 4);
-                }
-
-                if (tpPrice >= minPrice && tpPrice <= maxPrice) {
-                    const yTP = candlesAreaHeight - ((tpPrice - minPrice) / (maxPrice - minPrice)) * candlesAreaHeight;
-                    ctx.strokeStyle = '#00ff41';
-                    ctx.beginPath(); ctx.moveTo(0, yTP); ctx.lineTo(chartWidth, yTP); ctx.stroke();
-                    ctx.fillStyle = '#00ff41'; ctx.fillText(`TP: $${tpPrice.toFixed(1)}`, 10, yTP - 4);
-                }
+                ctx.fillText(lastCandle.close.toFixed(1), chartWidth + 4, lastY + 3);
             }
         }
 
-        // --- INICIALIZAÇÃO DO APP ---
-        window.addEventListener('load', () => {
-            updateClock();
-            setInterval(updateClock, 1000);
+        function setupTimeframeButtons() {
+            document.querySelectorAll('.tf-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.tf-btn').forEach(b => {
+                        b.className = "tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]";
+                    });
+                    btn.className = "tf-btn text-xs px-3.5 py-1 rounded active bg-[#00ff41] text-black font-bold";
+                    currentTimeframe = btn.textContent.trim();
+                    fetchCandles(timeframeMap[currentTimeframe]);
+                    initKlineWS();
+                });
+            });
+        }
 
-            initTicker();
+        function renderAll() {
+            renderChart();
+        }
+
+        window.addEventListener('resize', renderAll);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setInterval(updateClock, 1000);
+            updateClock();
+
+            setupTimeframeButtons();
+            fetchTicker();
             fetchCandles(timeframeMap[currentTimeframe]);
+
             initKlineWS();
             initDepthWS();
             initTradeWS();
 
-            window.addEventListener('resize', resizeCanvas);
-            setTimeout(resizeCanvas, 200);
+            setInterval(analyzeEngineWithFilters, 1000);
         });
     </script>
 </body>
