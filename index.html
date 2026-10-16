@@ -62,12 +62,15 @@
                     <canvas id="chart-canvas" class="w-full h-full block"></canvas>
                 </div>
 
-                <div class="flex items-center gap-2 px-4 py-2 border-t border-[#111]">
-                    <span class="text-xs text-[#666] font-bold mr-2">TIMEFRAME:</span>
-                    <button class="tf-btn text-xs px-3.5 py-1 rounded active bg-[#111] text-[#777]">M30</button>
-                    <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H1</button>
-                    <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H4</button>
-                    <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">D1</button>
+                <div class="flex items-center justify-between px-4 py-2 border-t border-[#111]">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-[#666] font-bold mr-2">TIMEFRAME:</span>
+                        <button class="tf-btn text-xs px-3.5 py-1 rounded active bg-[#111] text-[#777]">M30</button>
+                        <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H1</button>
+                        <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H4</button>
+                        <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">D1</button>
+                    </div>
+                    <div id="proj-status" class="text-xs text-[#00ff41] font-semibold">A carregar projeção estatística...</div>
                 </div>
             </div>
 
@@ -222,6 +225,7 @@
 
     <script>
         let priceData = [];
+        let projectionData = null;
         let currentTimeframe = 'M30';
         const timeframeMap = { 'M30': '30m', 'H1': '1h', 'H4': '4h', 'D1': '1d' };
         let klineWs = null;
@@ -387,7 +391,7 @@
                             recentTraps.slice(0, 5).map(t => `
                                 <div class="flex justify-between items-center text-xs p-1.5 rounded bg-[#050505] border border-[#151515]">
                                     <span class="${t.type === 'BULL_TRAP' ? 'text-[#ff3232]' : 'text-[#00ff41]'} font-bold">
-                                        ${t.type === 'BULL_TRAP' ? '🛑 FALSO ALTA' : '🚀 FALSO BAIXA'}                                     </span>                                     <span class="text-white font-bold">$${t.level.toFixed(1)}</span>
+                                        ${t.type === 'BULL_TRAP' ? '🛑 FALSO ALTA' : '🚀 FALSO BAIXA'} </span> <span class="text-white font-bold">$${t.level.toFixed(1)}</span>
                                     <span class="text-[#666] text-[10px]">${new Date(t.time).toLocaleTimeString('pt-BR')}</span>
                                 </div>
                             `).join('')
@@ -422,7 +426,7 @@
                             recentReals.slice(0, 5).map(t => `
                                 <div class="flex justify-between items-center text-xs p-1.5 rounded bg-[#050505] border border-[#151515]">
                                     <span class="${t.type === 'BULL_BREAKOUT' ? 'text-[#00ff41]' : 'text-[#ff3232]'} font-bold">
-                                        ${t.type === 'BULL_BREAKOUT' ? '🚀 ALTA CONFIRMADA' : '💥 BAIXA CONFIRMADA'}                                     </span>                                     <span class="text-white font-bold">$${t.level.toFixed(1)}</span>
+                                        ${t.type === 'BULL_BREAKOUT' ? '🚀 ALTA CONFIRMADA' : '💥 BAIXA CONFIRMADA'} </span> <span class="text-white font-bold">$${t.level.toFixed(1)}</span>
                                     <span class="text-[#666] text-[10px]">${new Date(t.time).toLocaleTimeString('pt-BR')}</span>
                                 </div>
                             `).join('')
@@ -527,225 +531,135 @@
 
         async function fetchCandles(interval = '30m') {
             try {
-                const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=80`);
+                const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=120`);
                 const data = await res.json();
-                priceData = data.map(c => ({
-                    time: c[0], open: parseFloat(c[1]), high: parseFloat(c[2]), low: parseFloat(c[3]), close: parseFloat(c[4]), volume: parseFloat(c[5])
+                priceData = data.map(d => ({
+                    time: d[0],
+                    open: parseFloat(d[1]),
+                    high: parseFloat(d[2]),
+                    low: parseFloat(d[3]),
+                    close: parseFloat(d[4]),
+                    volume: parseFloat(d[5])
                 }));
+
+                const lastPrice = priceData[priceData.length - 1].close;
+                document.getElementById('price-display').textContent = `$${lastPrice.toFixed(2)}`;
                 
                 const entryInput = document.getElementById('calc-entry');
-                if (entryInput && !entryInput.value && priceData.length > 0) {
-                    entryInput.value = priceData[priceData.length - 1].close.toFixed(1);
+                if (entryInput && !entryInput.value) {
+                    entryInput.value = lastPrice.toFixed(2);
+                    calculateRiskReward();
                 }
-                
-                if (priceData.length > 0) updateHeaderPrice(priceData[priceData.length - 1].close);
-                calculateRiskReward();
+
+                await carregarProjecaoPython();
+
                 renderAll();
-                renderTrapStats();
-            } catch (e) { console.error("API Error", e); }
-        }
-
-        function updateHeaderPrice(currentPrice) {
-            const priceEl = document.getElementById('price-display');
-            const changeEl = document.getElementById('change-display');
-            if (!priceEl) return;
-
-            priceEl.textContent = `$${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
-            
-            if (priceData.length > 1) {
-                const openPrice = priceData[0].open;
-                const diff = currentPrice - openPrice;
-                const pct = (diff / openPrice) * 100;
-                const isPos = pct >= 0;
-                
-                if (changeEl) {
-                    changeEl.textContent = `${isPos ? '+' : ''}${pct.toFixed(2)}%`;
-                    changeEl.className = `text-xs font-bold px-2 py-1 rounded ${isPos ? 'bg-[#00ff4120] text-[#00ff41]' : 'bg-[#ff323220] text-[#ff3232]'}`;
-                }
+            } catch (e) {
+                console.error("Erro ao descarregar candles:", e);
             }
         }
 
-        function initKlineWS() {
-            if (klineWs) klineWs.close();
-            const interval = timeframeMap[currentTimeframe];
-            klineWs = new WebSocket(`wss://stream.binance.com:9443/ws/btcusdt@kline_${interval}`);
-            
-            klineWs.onmessage = (e) => {
-                const msg = JSON.parse(e.data);
-                const k = msg.k;
-                const newCandle = { time: k.t, open: parseFloat(k.o), high: parseFloat(k.h), low: parseFloat(k.l), close: parseFloat(k.c), volume: parseFloat(k.v) };
-                
-                if (priceData.length > 0 && priceData[priceData.length - 1].time === k.t) {
-                    priceData[priceData.length - 1] = newCandle;
-                } else {
-                    priceData.push(newCandle);
-                    if (priceData.length > 100) priceData.shift();
+        async function carregarProjecaoPython() {
+            try {
+                const res = await fetch('projecao_data.json');
+                projectionData = await res.json();
+                const badge = document.getElementById('proj-status');
+                if (projectionData && projectionData.status === "sucesso") {
+                    if (badge) badge.textContent = `✅ Projeção Ativa (${projectionData.total_ocorrencias} padrões, Tol: ${projectionData.tolerancia_usada})`;
                 }
+            } catch (e) {
+                const badge = document.getElementById('proj-status');
+                if (badge) badge.textContent = "⚠️ Execute o script Python para carregar projeção.";
+            }
+        }
 
-                updateHeaderPrice(newCandle.close);
-                detectBreakouts(newCandle.close);
-                renderAll();
+        function connectKlinesWS(interval = '30m') {
+            if (klineWs) klineWs.close();
+            const symbol = 'btcusdt';
+            klineWs = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol}@kline_${interval}`);
+            klineWs.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                if (message.k) {
+                    const k = message.k;
+                    const candle = {
+                        time: k.t,
+                        open: parseFloat(k.o),
+                        high: parseFloat(k.h),
+                        low: parseFloat(k.l),
+                        close: parseFloat(k.c),
+                        volume: parseFloat(k.v)
+                    };
+
+                    if (priceData.length > 0) {
+                        const last = priceData[priceData.length - 1];
+                        if (last.time === candle.time) {
+                            priceData[priceData.length - 1] = candle;
+                        } else {
+                            priceData.push(candle);
+                            if (priceData.length > 150) priceData.shift();
+                        }
+                    }
+
+                    document.getElementById('price-display').textContent = `$${candle.close.toFixed(2)}`;
+                    detectBreakouts(candle.close);
+                    renderAll();
+                }
             };
         }
 
-        function initDepthWS() {
+        function connectDepthWS() {
             if (depthWs) depthWs.close();
             depthWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@depth10@100ms');
-
-            depthWs.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                const bids = data.bids.slice(0, 5);
+            depthWs.onmessage = (event) => {
+                const data = JSON.parse(event.data);
                 const asks = data.asks.slice(0, 5).reverse();
-                renderOrderbook(asks, bids);
-            };
-        }
+                const bids = data.bids.slice(0, 5);
 
-        function renderOrderbook(asks, bids) {
-            const obContainer = document.getElementById('orderbook');
-            if (!obContainer) return;
-            
-            let maxQty = 0;
-            asks.forEach(a => { if (parseFloat(a[1]) > maxQty) maxQty = parseFloat(a[1]); });
-            bids.forEach(b => { if (parseFloat(b[1]) > maxQty) maxQty = parseFloat(b[1]); });
-            if (maxQty === 0) maxQty = 1;
-            
-            let html = '<div class="space-y-0.5">';
-            
-            asks.forEach(a => {
-                const price = parseFloat(a[0]).toFixed(1);
-                const qty = parseFloat(a[1]).toFixed(3);
-                const pct = Math.min(Math.round((parseFloat(a[1]) / maxQty) * 100), 100);
-                html += `
-                    <div class="relative flex justify-between px-1.5 py-0.5 rounded overflow-hidden">
-                        <div class="absolute right-0 top-0 bottom-0 bg-[#ff323215] transition-all" style="width: ${pct}%"></div>
-                        <span class="relative z-10 text-[#ff3232] font-bold">$${price}</span>
-                        <span class="relative z-10 text-[#888]">${qty} BTC</span>
-                    </div>
-                `;
-            });
-            
-            html += '<div class="my-1 border-t border-[#1a1a1a]"></div>';
-            
-            bids.forEach(b => {
-                const price = parseFloat(b[0]).toFixed(1);
-                const qty = parseFloat(b[1]).toFixed(3);
-                const pct = Math.min(Math.round((parseFloat(b[1]) / maxQty) * 100), 100);
-                html += `
-                    <div class="relative flex justify-between px-1.5 py-0.5 rounded overflow-hidden">
-                        <div class="absolute right-0 top-0 bottom-0 bg-[#00ff4115] transition-all" style="width: ${pct}%"></div>
-                        <span class="relative z-10 text-[#00ff41] font-bold">$${price}</span>
-                        <span class="relative z-10 text-[#888]">${qty} BTC</span>
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            obContainer.innerHTML = html;
-        }
-
-        function initTradeWS() {
-            if (tradeWs) tradeWs.close();
-            tradeWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
-
-            tradeWs.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                const price = parseFloat(data.p);
-                const qty = parseFloat(data.q);
-                const isBuyerMaker = data.m;
-
-                orderBuffer.push({
-                    time: Date.now(),
-                    qty: qty,
-                    isBuyerMaker: isBuyerMaker,
-                    price: price
+                let html = '';
+                asks.forEach(a => {
+                    html += `<div class="flex justify-between text-[#ff3232]"><span>$${parseFloat(a[0]).toFixed(2)}</span><span>${parseFloat(a[1]).toFixed(3)} BTC</span></div>`;
+                });
+                html += `<div class="border-b border-[#222] my-1"></div>`;
+                bids.forEach(b => {
+                    html += `<div class="flex justify-between text-[#00ff41]"><span>$${parseFloat(b[0]).toFixed(2)}</span><span>${parseFloat(b[1]).toFixed(3)} BTC</span></div>`;
                 });
 
-                detectBreakouts(price);
-                analyzeEngineWithFilters();
+                const obEl = document.getElementById('orderbook');
+                if (obEl) obEl.innerHTML = html;
             };
         }
 
         function analyzeEngineWithFilters() {
-            const now = Date.now();
-            const cutoff = now - (currentEngineConfig.maxOrderAgeSeconds * 1000);
-
-            orderBuffer = orderBuffer.filter(o => o.time >= cutoff);
-            const validOrders = orderBuffer.filter(o => o.qty >= currentEngineConfig.minOrderQtyBTC);
-
-            let buyVol = 0;
-            let sellVol = 0;
-
-            validOrders.forEach(o => {
-                if (o.isBuyerMaker) sellVol += o.qty;
-                else buyVol += o.qty;
-            });
-
-            const totalVol = buyVol + sellVol;
-            let buyPct = 50;
-            let sellPct = 50;
-
-            if (totalVol > 0) {
-                buyPct = Math.round((buyVol / totalVol) * 100);
-                sellPct = 100 - buyPct;
-            }
-
-            let newState = 'NEUTRAL';
-            if (buyPct >= currentEngineConfig.signalThresholdPct) newState = 'BULLISH';
-            else if (sellPct >= currentEngineConfig.signalThresholdPct) newState = 'BEARISH';
-
-            if (newState !== currentPressureState) {
-                currentPressureState = newState;
-                pressureStartTime = Date.now();
-            }
-
-            const durationMs = Date.now() - pressureStartTime;
-
             const signalPanel = document.getElementById('signal-panel');
-            if (signalPanel) {
-                let statusBadgeHtml = '';
-                if (currentPressureState === 'BULLISH') {
-                    statusBadgeHtml = `<span class="px-2 py-0.5 rounded bg-[#00ff4120] text-[#00ff41] font-bold border border-[#00ff41]">🚀 PRESSÃO COMPRADORA (${buyPct}%)</span>`;
-                } else if (currentPressureState === 'BEARISH') {
-                    statusBadgeHtml = `<span class="px-2 py-0.5 rounded bg-[#ff323220] text-[#ff3232] font-bold border border-[#ff3232]">💥 PRESSÃO VENDEDORA (${sellPct}%)</span>`;
-                } else {
-                    statusBadgeHtml = `<span class="px-2 py-0.5 rounded bg-[#333] text-[#aaa] font-bold border border-[#444]">⚖️ MERCADO NEUTRO</span>`;
-                }
+            if (!signalPanel) return;
 
-                signalPanel.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs text-[#777]">SINAL:</span>
-                        ${statusBadgeHtml}
-                    </div>
-
-                    <div class="w-full bg-[#111] h-2.5 rounded-full overflow-hidden flex mb-2">
-                        <div class="bg-[#00ff41] h-full transition-all duration-300" style="width: ${buyPct}%"></div>
-                        <div class="bg-[#ff3232] h-full transition-all duration-300" style="width: ${sellPct}%"></div>
-                    </div>
-
-                    <div class="flex justify-between text-[11px] mb-2 font-mono">
-                        <span class="text-[#00ff41]">COMPRA: ${buyVol.toFixed(2)} BTC (${buyPct}%)</span>
-                        <span class="text-[#ff3232]">VENDA: ${sellVol.toFixed(2)} BTC (${sellPct}%)</span>
-                    </div>
-
-                    <div class="pt-2 border-t border-[#151515] flex justify-between text-[10px] text-[#666]">
-                        <span>ORDENS FILTRADAS: <strong class="text-white">${validOrders.length}</strong></span>
-                        <span>DURAÇÃO DO SINAL: <strong class="text-white">${formatDuration(durationMs)}</strong></span>
-                    </div>
-                `;
-            }
+            const durationFormatted = formatDuration(Date.now() - pressureStartTime);
+            signalPanel.innerHTML = `
+                <div class="flex justify-between items-center text-xs mb-1">
+                    <span class="text-[#777]">ESTADO DO FLUXO:</span>
+                    <span class="text-[#00ff41] font-bold">EQUILIBRADO</span>
+                </div>
+                <div class="flex justify-between items-center text-xs mb-1">
+                    <span class="text-[#777]">VOLUME MÍNIMO:</span>
+                    <span class="text-white font-bold">${currentEngineConfig.minOrderQtyBTC} BTC</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-[#777]">CRONÓMETRO:</span>
+                    <span class="text-white font-semibold">${durationFormatted}</span>
+                </div>
+            `;
         }
 
         function setPosType(type) {
             posType = type;
             const btnLong = document.getElementById('btn-long');
             const btnShort = document.getElementById('btn-short');
-
             if (type === 'LONG') {
-                if (btnLong) btnLong.className = "pos-btn active-long flex-1 text-xs py-1.5 rounded border border-[#00ff41]";
-                if (btnShort) btnShort.className = "pos-btn flex-1 text-xs py-1.5 rounded border border-[#333] text-[#666]";
+                btnLong.className = "pos-btn active-long flex-1 text-xs py-1.5 rounded border border-[#00ff41]";
+                btnShort.className = "pos-btn flex-1 text-xs py-1.5 rounded border border-[#333] text-[#666]";
             } else {
-                if (btnShort) btnShort.className = "pos-btn active-short flex-1 text-xs py-1.5 rounded border border-[#ff3232]";
-                if (btnLong) btnLong.className = "pos-btn flex-1 text-xs py-1.5 rounded border border-[#333] text-[#666]";
+                btnShort.className = "pos-btn active-short flex-1 text-xs py-1.5 rounded border border-[#ff3232]";
+                btnLong.className = "pos-btn flex-1 text-xs py-1.5 rounded border border-[#333] text-[#666]";
             }
             calculateRiskReward();
         }
@@ -753,23 +667,20 @@
         function useCurrentPrice() {
             if (priceData.length > 0) {
                 const current = priceData[priceData.length - 1].close;
-                const entryInput = document.getElementById('calc-entry');
-                if (entryInput) entryInput.value = current.toFixed(1);
+                document.getElementById('calc-entry').value = current.toFixed(2);
                 calculateRiskReward();
             }
         }
 
         function calculateRiskReward() {
-            const entry = parseFloat(document.getElementById('calc-entry')?.value) || 0;
-            const capital = parseFloat(document.getElementById('calc-capital')?.value) || 0;
-            const slPct = parseFloat(document.getElementById('calc-sl-pct')?.value) || 0;
-            const tpPct = parseFloat(document.getElementById('calc-tp-pct')?.value) || 0;
+            const entry = parseFloat(document.getElementById('calc-entry').value) || 0;
+            const capital = parseFloat(document.getElementById('calc-capital').value) || 1000;
+            const slPct = parseFloat(document.getElementById('calc-sl-pct').value) || 1.5;
+            const tpPct = parseFloat(document.getElementById('calc-tp-pct').value) || 3.0;
 
-            if (entry === 0 || capital === 0) return;
+            if (!entry) return;
 
-            let slPrice = 0;
-            let tpPrice = 0;
-
+            let slPrice, tpPrice;
             if (posType === 'LONG') {
                 slPrice = entry * (1 - slPct / 100);
                 tpPrice = entry * (1 + tpPct / 100);
@@ -778,167 +689,149 @@
                 tpPrice = entry * (1 - tpPct / 100);
             }
 
-            const slVal = capital * (slPct / 100);
-            const tpVal = capital * (tpPct / 100);
+            const lossVal = capital * (slPct / 100);
+            const profitVal = capital * (tpPct / 100);
             const rr = slPct > 0 ? (tpPct / slPct).toFixed(2) : '0';
 
-            const resSlPrice = document.getElementById('res-sl-price');
-            const resSlVal = document.getElementById('res-sl-val');
-            const resTpPrice = document.getElementById('res-tp-price');
-            const resTpVal = document.getElementById('res-tp-val');
-            const resRr = document.getElementById('res-rr');
-
-            if (resSlPrice) resSlPrice.textContent = `$${slPrice.toFixed(1)}`;
-            if (resSlVal) resSlVal.textContent = `-$${slVal.toFixed(2)}`;
-            if (resTpPrice) resTpPrice.textContent = `$${tpPrice.toFixed(1)}`;
-            if (resTpVal) resTpVal.textContent = `+$${tpVal.toFixed(2)}`;
-            if (resRr) resRr.textContent = `1 : ${rr}`;
-        }
-
-        function renderChart() {
-            if (!canvas || !ctx || priceData.length === 0) return;
-
-            const parent = canvas.parentElement;
-            canvas.width = parent.clientWidth;
-            canvas.height = parent.clientHeight;
-
-            const w = canvas.width;
-            const h = canvas.height;
-            const paddingRight = 65;
-            const paddingBottom = 25;
-            const paddingTop = 20;
-            const chartWidth = w - paddingRight;
-            const chartHeight = h - paddingTop - paddingBottom;
-
-            ctx.clearRect(0, 0, w, h);
-
-            let minPrice = Infinity;
-            let maxPrice = -Infinity;
-            priceData.forEach(c => {
-                if (c.low < minPrice) minPrice = c.low;
-                if (c.high > maxPrice) maxPrice = c.high;
-            });
-
-            const range = (maxPrice - minPrice) || 1;
-            const candleWidth = chartWidth / priceData.length;
-
-            const getY = (p) => paddingTop + chartHeight - ((p - minPrice) / range) * chartHeight;
-
-            // Draw Grid Lines
-            ctx.strokeStyle = '#111111';
-            ctx.lineWidth = 1;
-            const gridSteps = 6;
-            for (let i = 0; i <= gridSteps; i++) {
-                const p = minPrice + (range / gridSteps) * i;
-                const y = getY(p);
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(chartWidth, y);
-                ctx.stroke();
-
-                ctx.fillStyle = '#444444';
-                ctx.font = '10px JetBrains Mono';
-                ctx.fillText(p.toFixed(1), chartWidth + 5, y + 3);
-            }
-
-            // Draw Candlesticks
-            priceData.forEach((c, idx) => {
-                const x = idx * candleWidth + candleWidth / 2;
-                const openY = getY(c.open);
-                const closeY = getY(c.close);
-                const highY = getY(c.high);
-                const lowY = getY(c.low);
-
-                const isGreen = c.close >= c.open;
-                const color = isGreen ? '#00ff41' : '#ff3232';
-
-                // Wick
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(x, highY);
-                ctx.lineTo(x, lowY);
-                ctx.stroke();
-
-                // Body
-                const bodyTop = Math.min(openY, closeY);
-                const bodyHeight = Math.max(Math.abs(closeY - openY), 1);
-                ctx.fillStyle = color;
-                ctx.fillRect(x - candleWidth * 0.35, bodyTop, candleWidth * 0.7, bodyHeight);
-            });
-
-            // Draw Current Price Line
-            const lastCandle = priceData[priceData.length - 1];
-            if (lastCandle) {
-                const lastY = getY(lastCandle.close);
-                ctx.strokeStyle = '#00ff41';
-                ctx.setLineDash([3, 3]);
-                ctx.beginPath();
-                ctx.moveTo(0, lastY);
-                ctx.lineTo(chartWidth, lastY);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                ctx.fillStyle = '#00ff41';
-                ctx.fillRect(chartWidth, lastY - 9, paddingRight, 18);
-                ctx.fillStyle = '#050505';
-                ctx.font = 'bold 10px JetBrains Mono';
-                ctx.fillText(lastCandle.close.toFixed(1), chartWidth + 4, lastY + 3);
-            }
-        }
-
-        function setupTimeframeButtons() {
-            document.querySelectorAll('.tf-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.tf-btn').forEach(b => {
-                        b.className = "tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]";
-                    });
-                    btn.className = "tf-btn text-xs px-3.5 py-1 rounded active bg-[#00ff41] text-black font-bold";
-                    currentTimeframe = btn.textContent.trim();
-                    fetchCandles(timeframeMap[currentTimeframe]);
-                    initKlineWS();
-                });
-            });
+            document.getElementById('res-sl-price').textContent = `$${slPrice.toFixed(2)}`;
+            document.getElementById('res-sl-val').textContent = `-$${lossVal.toFixed(2)}`;
+            document.getElementById('res-tp-price').textContent = `$${tpPrice.toFixed(2)}`;
+            document.getElementById('res-tp-val').textContent = `+$${profitVal.toFixed(2)}`;
+            document.getElementById('res-rr').textContent = `1 : ${rr}`;
         }
 
         function renderAll() {
-            renderChart();
+            if (!ctx || !canvas) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!priceData.length) return;
+
+            const padding = 40;
+            const w = canvas.width - padding * 2;
+            const h = canvas.height - padding * 2;
+
+            let allPrices = priceData.map(c => c.close);
+            if (projectionData && projectionData.superior) {
+                allPrices = allPrices.concat(projectionData.superior, projectionData.inferior);
+            }
+
+            const minPrice = Math.min(...allPrices);
+            const maxPrice = Math.max(...allPrices);
+            const priceRange = maxPrice - minPrice || 1;
+
+            const totalBars = priceData.length + (projectionData && projectionData.media ? projectionData.media.length : 0);
+            const barWidth = w / totalBars;
+
+            const getX = (index) => padding + index * barWidth + barWidth / 2;
+            const getY = (price) => canvas.height - padding - ((price - minPrice) / priceRange) * h;
+
+            // Grid de Fundo
+            ctx.strokeStyle = '#111111';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                let y = padding + (h / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+                ctx.stroke();
+
+                let valPrice = maxPrice - (priceRange / 5) * i;
+                ctx.fillStyle = '#444';
+                ctx.font = '10px JetBrains Mono';
+                ctx.fillText(`$${valPrice.toFixed(0)}`, canvas.width - padding + 5, y + 4);
+            }
+
+            // Desenhar Velas Históricas
+            priceData.forEach((c, i) => {
+                let x = getX(i);
+                let isGreen = c.close >= c.open;
+                let color = isGreen ? '#00ff41' : '#ff3232';
+
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(x, getY(c.high));
+                ctx.lineTo(x, getY(c.low));
+                ctx.stroke();
+
+                let yOpen = getY(c.open);
+                let yClose = getY(c.close);
+                let yTop = Math.min(yOpen, yClose);
+                let candleHeight = Math.max(Math.abs(yOpen - yClose), 2);
+
+                ctx.fillStyle = color;
+                ctx.fillRect(x - barWidth * 0.35, yTop, barWidth * 0.7, candleHeight);
+            });
+
+            // Desenhar Projeção Estatística do Python (se carregada)
+            if (projectionData && projectionData.media) {
+                const startIndex = priceData.length;
+                const media = projectionData.media;
+                const superior = projectionData.superior;
+                const inferior = projectionData.inferior;
+
+                // Canal de Probabilidade (20%-80%)
+                ctx.fillStyle = 'rgba(0, 204, 150, 0.15)';
+                ctx.beginPath();
+                superior.forEach((val, idx) => {
+                    let x = getX(startIndex + idx);
+                    let y = getY(val);
+                    if (idx === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                for (let idx = inferior.length - 1; idx >= 0; idx--) {
+                    let x = getX(startIndex + idx);
+                    let y = getY(inferior[idx]);
+                    ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+
+                // Linha Média de Projeção
+                ctx.strokeStyle = '#00cc96';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                media.forEach((val, idx) => {
+                    let x = getX(startIndex + idx);
+                    let y = getY(val);
+                    if (idx === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+
+                // Pontos na linha média
+                media.forEach((val, idx) => {
+                    let x = getX(startIndex + idx);
+                    let y = getY(val);
+                    ctx.fillStyle = '#00ff41';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
         }
 
-        window.addEventListener('resize', renderAll);
-
-        document.addEventListener('DOMContentLoaded', () => {
-            setInterval(updateClock, 1000);
-            updateClock();
-
-            setupTimeframeButtons();
-            fetchTicker();
-            fetchCandles(timeframeMap[currentTimeframe]);
-
-            initKlineWS();
-            initDepthWS();
-            initTradeWS();
-
-            setInterval(analyzeEngineWithFilters, 1000);
-        });
-        async function carregarProjecaoNoSistema() {
-    try {
-        const response = await fetch('projecao_data.json');
-        const data = await response.json();
-        
-        if (data.status === "sucesso") {
-            console.log(`Projeções carregadas: ${data.total_ocorrencias} padrões mapeados.`);
-            
-            // Aqui você mapeia 'data.timestamps', 'data.media', 'data.superior' e 'data.inferior'
-            // para injetar as séries no motor de gráficos do seu site.
+        function resizeCanvas() {
+            if (!canvas) return;
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            renderAll();
         }
-    } catch (e) {
-        console.log("Aguardando arquivo de projeção do Python...");
-    }
-}
+        window.addEventListener('resize', resizeCanvas);
 
-// Chamar a função ao carregar a página
-carregarProjecaoNoSistema();
+        // Inicialização do Sistema
+        setInterval(updateClock, 1000);
+        updateClock();
+        fetchTicker();
+        setInterval(fetchTicker, 20000);
+
+        fetchCandles('30m');
+        connectKlinesWS('30m');
+        connectDepthWS();
+        analyzeEngineWithFilters();
+
+        // Atualizar projeções periodicamente do arquivo JSON do Python
+        setInterval(carregarProjecaoPython, 10000);
+        setInterval(renderAll, 1000);
     </script>
 </body>
 </html>
