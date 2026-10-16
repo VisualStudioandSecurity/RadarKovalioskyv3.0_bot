@@ -921,6 +921,24 @@
 
             setInterval(analyzeEngineWithFilters, 1000);
         });
+        async function carregarProjecaoNoSistema() {
+    try {
+        const response = await fetch('projecao_data.json');
+        const data = await response.json();
+        
+        if (data.status === "sucesso") {
+            console.log(`Projeções carregadas: ${data.total_ocorrencias} padrões mapeados.`);
+            
+            // Aqui você mapeia 'data.timestamps', 'data.media', 'data.superior' e 'data.inferior'
+            // para injetar as séries no motor de gráficos do seu site.
+        }
+    } catch (e) {
+        console.log("Aguardando arquivo de projeção do Python...");
+    }
+}
+
+// Chamar a função ao carregar a página
+carregarProjecaoNoSistema();
     </script>
 </body>
 </html>
