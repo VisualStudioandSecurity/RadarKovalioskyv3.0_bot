@@ -530,17 +530,37 @@
         }
 
         async function fetchCandles(interval = '30m') {
-            try {
-                const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=120`);
-                const data = await res.json();
-                priceData = data.map(d => ({
-                    time: d[0],
-                    open: parseFloat(d[1]),
-                    high: parseFloat(d[2]),
-                    low: parseFloat(d[3]),
-                    close: parseFloat(d[4]),
-                    volume: parseFloat(d[5])
-                }));
+    try {
+        // Lê o arquivo JSON gerado pelo teu script Python local
+        const res = await fetch('primexbt_candles.json');
+        const data = await res.json();
+        
+        // Mapeia os dados para o formato que o canvas do teu site já utiliza
+        // (Nota: Ajuste os índices do array conforme o formato exato retornado pela rota /bars da PrimeXBT)
+        priceData = data.candles.map(d => ({
+            time: d.time || d[0],
+            open: parseFloat(d.open || d[1]),
+            high: parseFloat(d.high || d[2]),
+            low: parseFloat(d.low || d[3]),
+            close: parseFloat(d.close || d[4]),
+            volume: parseFloat(d.volume || d[5])
+        }));
+
+        const lastPrice = priceData[priceData.length - 1].close;
+        document.getElementById('price-display').textContent = `$${lastPrice.toFixed(2)}`;
+        
+        const entryInput = document.getElementById('calc-entry');
+        if (entryInput && !entryInput.value) {
+            entryInput.value = lastPrice.toFixed(2);
+            calculateRiskReward();
+        }
+
+        await carregarProjecaoPython();
+        renderAll();
+    } catch (e) {
+        console.error("Erro ao carregar candles da PrimeXBT (verifique se o script Python está a correr):", e);
+    }
+}
 
                 const lastPrice = priceData[priceData.length - 1].close;
                 document.getElementById('price-display').textContent = `$${lastPrice.toFixed(2)}`;
