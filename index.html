@@ -2,7 +2,7 @@
 <html lang="pt-br" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <title>Visual Cripto Hub | Terminal</title>
+    <title>Visual Cripto Hub | Terminal PrimeXBT</title>
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -34,7 +34,7 @@
                 <div class="w-2.5 h-2.5 rounded-full pulse-glow" style="background: #00ff41; box-shadow: 0 0 8px #00ff41;"></div>
                 <span class="text-base font-bold tracking-widest uppercase" style="font-family: 'Orbitron';">VISUAL CRIPTO HUB</span>
                 
-                <a href="altcoins.html" class="text-xs text-[#00ff41] hover:underline bg-[#050505] px-2.5 py-1 rounded border border-[#00ff4140] font-semibold">🔄 MULTI-ATIVOS (ETH, XAU, SOL)</a>
+                <span class="text-xs text-[#00ff41] bg-[#050505] px-2.5 py-1 rounded border border-[#00ff4140] font-semibold">🔗 MODO PRIMEXBT API</span>
             </div>
             <div class="flex items-center gap-4 text-xs font-semibold">
                 <span id="clock" class="text-sm">00:00:00</span>
@@ -50,7 +50,7 @@
             <div class="flex-1 flex flex-col">
                 <div class="flex items-center justify-between px-4 py-2 border-b border-[#111]">
                     <div class="flex items-center gap-3">
-                        <span class="text-xl font-bold" style="color: #00ff41; font-family: 'Orbitron';">BTC/USDT</span>
+                        <span id="active-symbol-title" class="text-xl font-bold" style="color: #00ff41; font-family: 'Orbitron';">BTC/USD</span>
                     </div>
                     <div class="flex items-center gap-4">
                         <span id="price-display" class="text-2xl font-bold" style="font-family: 'Orbitron';">—</span>
@@ -65,10 +65,10 @@
                 <div class="flex items-center justify-between px-4 py-2 border-t border-[#111]">
                     <div class="flex items-center gap-2">
                         <span class="text-xs text-[#666] font-bold mr-2">TIMEFRAME:</span>
-                        <button class="tf-btn text-xs px-3.5 py-1 rounded active bg-[#111] text-[#777]">M30</button>
-                        <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H1</button>
-                        <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H4</button>
-                        <button class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">D1</button>
+                        <button data-tf="M30" class="tf-btn text-xs px-3.5 py-1 rounded active bg-[#111] text-[#777]">M30</button>
+                        <button data-tf="H1" class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H1</button>
+                        <button data-tf="H4" class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">H4</button>
+                        <button data-tf="D1" class="tf-btn text-xs px-3.5 py-1 rounded bg-[#111] text-[#777]">D1</button>
                     </div>
                     <div id="proj-status" class="text-xs text-[#00ff41] font-semibold">A carregar projeção estatística...</div>
                 </div>
@@ -83,37 +83,10 @@
                     </div>
 
                     <div class="grid grid-cols-3 gap-1.5 mb-3">
-                        <button onclick="setEngineProfile('SCALPING')" id="btn-mode-scalping" class="mode-btn text-xs py-1.5 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">⚡ 5 MIN (500)</button>
-                        <button onclick="setEngineProfile('DAYTRADE')" id="btn-mode-daytrade" class="mode-btn text-xs py-1.5 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]">🎯 10 MIN (1k)</button>
-                        <button onclick="setEngineProfile('SWING')" id="btn-mode-swing" class="mode-btn text-xs py-1.5 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">🐋 25 MIN (5k)</button>
+                        <button onclick="setEngineProfile('SCALPING')" id="btn-mode-scalping" class="mode-btn text-xs py-1.5 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">⚡ 5 MIN</button>
+                        <button onclick="setEngineProfile('DAYTRADE')" id="btn-mode-daytrade" class="mode-btn text-xs py-1.5 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]">🎯 10 MIN</button>
+                        <button onclick="setEngineProfile('SWING')" id="btn-mode-swing" class="mode-btn text-xs py-1.5 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">🐋 25 MIN</button>
                     </div>
-
-                    <details class="text-xs text-[#777]">
-                        <summary class="cursor-pointer hover:text-[#00ff41] select-none font-semibold">⚙️ Ajuste Fino Manual</summary>
-                        <div class="mt-2 space-y-2.5 bg-[#050505] p-2.5 rounded border border-[#111]">
-                            <div>
-                                <div class="flex justify-between mb-1">
-                                    <span>JANELA TEMPORAL:</span>
-                                    <span id="lbl-age" class="text-[#00ff41] font-bold">600s (10m)</span>
-                                </div>
-                                <input type="range" id="cfg-age" min="30" max="1800" value="600" step="30" class="w-full accent-[#00ff41]" oninput="updateCustomEngine()">
-                            </div>
-                            <div>
-                                <div class="flex justify-between mb-1">
-                                    <span>VOL MÍNIMO (BTC):</span>
-                                    <span id="lbl-min-vol" class="text-[#00ff41] font-bold">0.05 BTC</span>
-                                </div>
-                                <input type="range" id="cfg-min-vol" min="0.001" max="1" value="0.05" step="0.005" class="w-full accent-[#00ff41]" oninput="updateCustomEngine()">
-                            </div>
-                            <div>
-                                <div class="flex justify-between mb-1">
-                                    <span>SINAL EXIGIDO (%):</span>
-                                    <span id="lbl-threshold" class="text-[#00ff41] font-bold">65%</span>
-                                </div>
-                                <input type="range" id="cfg-threshold" min="55" max="80" value="65" step="1" class="w-full accent-[#00ff41]" oninput="updateCustomEngine()">
-                            </div>
-                        </div>
-                    </details>
                 </div>
 
                 <!-- PAINEL DE ANÁLISE DE ROMPIMENTOS -->
@@ -125,13 +98,7 @@
 
                     <div class="flex gap-1 mb-2">
                         <button onclick="setBreakoutTab('TRAPS')" id="tab-btn-traps" class="tab-btn active-tab flex-1 text-[10px] py-1 rounded border border-[#00ff41]">⚠️ FALSOS (TRAPS)</button>
-                        <button onclick="setBreakoutTab('REAL')" id="tab-btn-real" class="tab-btn flex-1 text-[10px] py-1 rounded border border-[#333] text-[#777]">🚀 REAIS (CONFIRMADUS)</button>
-                    </div>
-                    
-                    <div class="grid grid-cols-3 gap-1.5 mb-2.5">
-                        <button onclick="setTrapWindow(10)" id="btn-trap-10" class="trap-btn text-xs py-1 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]">10 MIN</button>
-                        <button onclick="setTrapWindow(25)" id="btn-trap-25" class="trap-btn text-xs py-1 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">25 MIN</button>
-                        <button onclick="setTrapWindow(30)" id="btn-trap-30" class="trap-btn text-xs py-1 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]">30 MIN</button>
+                        <button onclick="setBreakoutTab('REAL')" id="tab-btn-real" class="tab-btn flex-1 text-[10px] py-1 rounded border border-[#333] text-[#777]">🚀 REAIS</button>
                     </div>
 
                     <div id="trap-stats-panel" class="p-2.5 rounded bg-[#0a0a0a] border border-[#111]">
@@ -139,26 +106,15 @@
                     </div>
                 </div>
 
-                <!-- ORDER BOOK -->
-                <div class="p-3.5 border-b border-[#111]">
-                    <div class="flex justify-between items-center mb-2">
-                        <div class="text-xs font-bold text-[#00ff41]">ORDER BOOK (REAL-TIME)</div>
-                        <span class="text-[10px] text-[#00ff4188]">● BINANCE WS</span>
-                    </div>
-                    <div id="orderbook" class="space-y-1 font-mono text-xs">
-                        <div class="text-xs text-[#555] text-center py-2">Conectando ao Livro...</div>
-                    </div>
-                </div>
-
-                <!-- ANÁLISE DE PRESSÃO & CRONÓMETRO -->
+                <!-- ORDER BOOK & PRESSÃO -->
                 <div class="p-3.5 border-b border-[#111]">
                     <div class="text-xs font-bold mb-2 text-[#00ff41]">PRESSÃO DE MERCADO</div>
                     <div id="signal-panel" class="p-3 rounded bg-[#0a0a0a] border border-[#111]">
-                        <div class="text-xs text-[#555] text-center">Aguardando fluxo de ordens...</div>
+                        <div class="text-xs text-[#555] text-center">Aguardando dados da API...</div>
                     </div>
                 </div>
 
-                <!-- CALCULADORA DE STOP LOSS & TAKE PROFIT -->
+                <!-- CALCULADORA DE SL / TP -->
                 <div class="p-3.5">
                     <div class="text-xs font-bold mb-2 text-[#00ff41]">CALCULADORA DE SL / TP</div>
                     <div class="p-3 rounded bg-[#0a0a0a] border border-[#111] space-y-3">
@@ -208,10 +164,6 @@
                                 <span class="text-[#777]">LUCRO ESTIMADO:</span>
                                 <span id="res-tp-val" class="text-[#00ff41] font-semibold">—</span>
                             </div>
-                            <div class="flex justify-between pt-1 border-t border-[#111]">
-                                <span class="text-[#777]">RISCO : RETORNO:</span>
-                                <span id="res-rr" class="text-white font-bold">—</span>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -226,356 +178,50 @@
     <script>
         let priceData = [];
         let projectionData = null;
-        let currentTimeframe = 'M30';
-        const timeframeMap = { 'M30': '30m', 'H1': '1h', 'H4': '4h', 'D1': '1d' };
-        let klineWs = null;
-        let depthWs = null;
-        let tradeWs = null;
         let posType = 'LONG';
         const canvas = document.getElementById('chart-canvas');
         const ctx = canvas ? canvas.getContext('2d') : null;
 
-        const ENGINE_PROFILES = {
-            SCALPING: { name: "RÁPIDO (5 MIN)", minOrderQtyBTC: 0.01, maxOrderAgeSeconds: 300, signalThresholdPct: 60, maxOrders: 500 },
-            DAYTRADE: { name: "NORMAL (10 MIN)", minOrderQtyBTC: 0.05, maxOrderAgeSeconds: 600, signalThresholdPct: 65, maxOrders: 1000 },
-            SWING: { name: "LONGO (25 MIN)", minOrderQtyBTC: 0.25, maxOrderAgeSeconds: 1500, signalThresholdPct: 70, maxOrders: 5000 }
-        };
-
-        let currentEngineConfig = { ...ENGINE_PROFILES.DAYTRADE };
-        let orderBuffer = [];
-
-        let currentPressureState = 'NEUTRAL';
-        let pressureStartTime = Date.now();
-
-        // --- SISTEMA DE DETEÇÃO DE ROMPIMENTOS ---
-        let falseBreakoutsList = [];
-        let realBreakoutsList = [];
-        let activeBreakout = null;
-        let falseBreakoutWindowMins = 10;
-        let currentBreakoutTab = 'TRAPS';
-
-        function setBreakoutTab(tab) {
-            currentBreakoutTab = tab;
-            const btnTraps = document.getElementById('tab-btn-traps');
-            const btnReal = document.getElementById('tab-btn-real');
-
-            if (tab === 'TRAPS') {
-                if (btnTraps) btnTraps.className = "tab-btn active-tab flex-1 text-[10px] py-1 rounded border border-[#00ff41]";
-                if (btnReal) btnReal.className = "tab-btn flex-1 text-[10px] py-1 rounded border border-[#333] text-[#777]";
-            } else {
-                if (btnReal) btnReal.className = "tab-btn active-tab flex-1 text-[10px] py-1 rounded border border-[#00ff41]";
-                if (btnTraps) btnTraps.className = "tab-btn flex-1 text-[10px] py-1 rounded border border-[#333] text-[#777]";
-            }
-            renderTrapStats();
-        }
-
-        function setTrapWindow(mins) {
-            falseBreakoutWindowMins = mins;
-
-            document.querySelectorAll('.trap-btn').forEach(btn => {
-                btn.className = "trap-btn text-xs py-1 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]";
-            });
-
-            const activeBtn = document.getElementById(`btn-trap-${mins}`);
-            if (activeBtn) {
-                activeBtn.className = "trap-btn text-xs py-1 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]";
-            }
-
-            const badge = document.getElementById('trap-window-badge');
-            if (badge) badge.textContent = `JANELA: ${mins}M`;
-            renderTrapStats();
-            renderAll();
-        }
-
-        function detectBreakouts(tradePrice) {
-            if (!priceData || priceData.length < 10) return;
-
-            const recentCandles = priceData.slice(-20);
-            const localHigh = Math.max(...recentCandles.map(c => c.high));
-            const localLow = Math.min(...recentCandles.map(c => c.low));
-            const now = Date.now();
-
-            if (!activeBreakout) {
-                if (tradePrice > localHigh) {
-                    activeBreakout = { type: 'BULL', level: localHigh, peak: tradePrice, time: now };
-                } else if (tradePrice < localLow) {
-                    activeBreakout = { type: 'BEAR', level: localLow, bottom: tradePrice, time: now };
-                }
-            } else {
-                const elapsedSecs = (now - activeBreakout.time) / 1000;
-
-                if (activeBreakout.type === 'BULL') {
-                    if (tradePrice > activeBreakout.peak) activeBreakout.peak = tradePrice;
-
-                    if (tradePrice < activeBreakout.level && elapsedSecs <= 120) {
-                        falseBreakoutsList.unshift({
-                            type: 'BULL_TRAP',
-                            level: activeBreakout.level,
-                            price: activeBreakout.peak,
-                            time: now
-                        });
-                        activeBreakout = null;
-                        renderTrapStats();
-                        renderAll();
-                    } else if (elapsedSecs > 120 || (tradePrice - activeBreakout.level) / activeBreakout.level >= 0.0025) {
-                        realBreakoutsList.unshift({
-                            type: 'BULL_BREAKOUT',
-                            level: activeBreakout.level,
-                            price: tradePrice,
-                            time: now
-                        });
-                        activeBreakout = null;
-                        renderTrapStats();
-                        renderAll();
-                    }
-                } else if (activeBreakout.type === 'BEAR') {
-                    if (tradePrice < activeBreakout.bottom) activeBreakout.bottom = tradePrice;
-
-                    if (tradePrice > activeBreakout.level && elapsedSecs <= 120) {
-                        falseBreakoutsList.unshift({
-                            type: 'BEAR_TRAP',
-                            level: activeBreakout.level,
-                            price: activeBreakout.bottom,
-                            time: now
-                        });
-                        activeBreakout = null;
-                        renderTrapStats();
-                        renderAll();
-                    } else if (elapsedSecs > 120 || (activeBreakout.level - tradePrice) / activeBreakout.level >= 0.0025) {
-                        realBreakoutsList.unshift({
-                            type: 'BEAR_BREAKOUT',
-                            level: activeBreakout.level,
-                            price: tradePrice,
-                            time: now
-                        });
-                        activeBreakout = null;
-                        renderTrapStats();
-                        renderAll();
-                    }
-                }
-            }
-        }
-
-        function renderTrapStats() {
-            const container = document.getElementById('trap-stats-panel');
-            if (!container) return;
-
-            const now = Date.now();
-            const cutoffTime = now - (falseBreakoutWindowMins * 60 * 1000);
-
-            if (currentBreakoutTab === 'TRAPS') {
-                const recentTraps = falseBreakoutsList.filter(t => t.time >= cutoffTime);
-                const bullTraps = recentTraps.filter(t => t.type === 'BULL_TRAP').length;
-                const bearTraps = recentTraps.filter(t => t.type === 'BEAR_TRAP').length;
-
-                container.innerHTML = `
-                    <div class="grid grid-cols-3 gap-1 text-center mb-2 pb-2 border-b border-[#111]">
-                        <div class="bg-[#111] p-1.5 rounded">
-                            <div class="text-[9px] text-[#777] font-bold">BULL TRAPS</div>
-                            <div class="text-sm font-extrabold text-[#ff3232]">${bullTraps}</div>
-                        </div>
-                        <div class="bg-[#111] p-1.5 rounded">
-                            <div class="text-[9px] text-[#777] font-bold">BEAR TRAPS</div>
-                            <div class="text-sm font-extrabold text-[#00ff41]">${bearTraps}</div>
-                        </div>
-                        <div class="bg-[#111] p-1.5 rounded">
-                            <div class="text-[9px] text-[#777] font-bold">TOTAL</div>
-                            <div class="text-sm font-extrabold text-white">${recentTraps.length}</div>
-                        </div>
-                    </div>
-
-                    <div class="text-[10px] text-[#777] font-bold mb-1 uppercase">Falsos Rompimentos (${falseBreakoutWindowMins}m):</div>
-                    <div class="space-y-1 max-h-28 overflow-y-auto pr-1">
-                        ${recentTraps.length === 0 ? 
-                            `<div class="text-xs text-[#555] text-center py-2">Sem falsos rompimentos nos últimos ${falseBreakoutWindowMins} min</div>` :
-                            recentTraps.slice(0, 5).map(t => `
-                                <div class="flex justify-between items-center text-xs p-1.5 rounded bg-[#050505] border border-[#151515]">
-                                    <span class="${t.type === 'BULL_TRAP' ? 'text-[#ff3232]' : 'text-[#00ff41]'} font-bold">
-                                        ${t.type === 'BULL_TRAP' ? '🛑 FALSO ALTA' : '🚀 FALSO BAIXA'} </span> <span class="text-white font-bold">$${t.level.toFixed(1)}</span>
-                                    <span class="text-[#666] text-[10px]">${new Date(t.time).toLocaleTimeString('pt-BR')}</span>
-                                </div>
-                            `).join('')
-                        }
-                    </div>
-                `;
-            } else {
-                const recentReals = realBreakoutsList.filter(t => t.time >= cutoffTime);
-                const bullReals = recentReals.filter(t => t.type === 'BULL_BREAKOUT').length;
-                const bearReals = recentReals.filter(t => t.type === 'BEAR_BREAKOUT').length;
-
-                container.innerHTML = `
-                    <div class="grid grid-cols-3 gap-1 text-center mb-2 pb-2 border-b border-[#111]">
-                        <div class="bg-[#111] p-1.5 rounded">
-                            <div class="text-[9px] text-[#777] font-bold">ALTA REAL</div>
-                            <div class="text-sm font-extrabold text-[#00ff41]">${bullReals}</div>
-                        </div>
-                        <div class="bg-[#111] p-1.5 rounded">
-                            <div class="text-[9px] text-[#777] font-bold">BAIXA REAL</div>
-                            <div class="text-sm font-extrabold text-[#ff3232]">${bearReals}</div>
-                        </div>
-                        <div class="bg-[#111] p-1.5 rounded">
-                            <div class="text-[9px] text-[#777] font-bold">TOTAL</div>
-                            <div class="text-sm font-extrabold text-white">${recentReals.length}</div>
-                        </div>
-                    </div>
-
-                    <div class="text-[10px] text-[#777] font-bold mb-1 uppercase">Rompimentos Reais (${falseBreakoutWindowMins}m):</div>
-                    <div class="space-y-1 max-h-28 overflow-y-auto pr-1">
-                        ${recentReals.length === 0 ? 
-                            `<div class="text-xs text-[#555] text-center py-2">Sem rompimentos reais nos últimos ${falseBreakoutWindowMins} min</div>` :
-                            recentReals.slice(0, 5).map(t => `
-                                <div class="flex justify-between items-center text-xs p-1.5 rounded bg-[#050505] border border-[#151515]">
-                                    <span class="${t.type === 'BULL_BREAKOUT' ? 'text-[#00ff41]' : 'text-[#ff3232]'} font-bold">
-                                        ${t.type === 'BULL_BREAKOUT' ? '🚀 ALTA CONFIRMADA' : '💥 BAIXA CONFIRMADA'} </span> <span class="text-white font-bold">$${t.level.toFixed(1)}</span>
-                                    <span class="text-[#666] text-[10px]">${new Date(t.time).toLocaleTimeString('pt-BR')}</span>
-                                </div>
-                            `).join('')
-                        }
-                    </div>
-                `;
-            }
-        }
-
-        function formatDuration(ms) {
-            const totalSecs = Math.floor(ms / 1000);
-            const mins = Math.floor(totalSecs / 60);
-            const secs = totalSecs % 60;
-            if (mins > 0) return `${mins}m ${secs}s`;
-            return `${secs}s`;
-        }
-
-        function formatTimeLabel(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            if (mins > 0 && secs === 0) return `${seconds}s (${mins}m)`;
-            if (mins > 0) return `${seconds}s (${mins}m ${secs}s)`;
-            return `${seconds}s`;
-        }
-
-        function setEngineProfile(profileKey) {
-            if (!ENGINE_PROFILES[profileKey]) return;
-            
-            currentEngineConfig = { ...ENGINE_PROFILES[profileKey] };
-
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.className = "mode-btn text-xs py-1.5 rounded bg-[#111] text-[#777] border border-[#222] hover:border-[#00ff41]";
-            });
-
-            const activeBtn = document.getElementById(`btn-mode-${profileKey.toLowerCase()}`);
-            if (activeBtn) {
-                activeBtn.className = "mode-btn text-xs py-1.5 rounded bg-[#00ff41] text-black font-bold border border-[#00ff41]";
-            }
-
-            const badge = document.getElementById('engine-mode-badge');
-            if (badge) badge.textContent = profileKey;
-
-            document.getElementById('cfg-age').value = currentEngineConfig.maxOrderAgeSeconds;
-            document.getElementById('cfg-min-vol').value = currentEngineConfig.minOrderQtyBTC;
-            document.getElementById('cfg-threshold').value = currentEngineConfig.signalThresholdPct;
-
-            document.getElementById('lbl-age').textContent = formatTimeLabel(currentEngineConfig.maxOrderAgeSeconds);
-            document.getElementById('lbl-min-vol').textContent = `${currentEngineConfig.minOrderQtyBTC} BTC`;
-            document.getElementById('lbl-threshold').textContent = `${currentEngineConfig.signalThresholdPct}%`;
-
-            analyzeEngineWithFilters();
-        }
-
-        function updateCustomEngine() {
-            currentEngineConfig.maxOrderAgeSeconds = parseFloat(document.getElementById('cfg-age').value);
-            currentEngineConfig.minOrderQtyBTC = parseFloat(document.getElementById('cfg-min-vol').value);
-            currentEngineConfig.signalThresholdPct = parseFloat(document.getElementById('cfg-threshold').value);
-
-            document.getElementById('lbl-age').textContent = formatTimeLabel(currentEngineConfig.maxOrderAgeSeconds);
-            document.getElementById('lbl-min-vol').textContent = `${currentEngineConfig.minOrderQtyBTC} BTC`;
-            document.getElementById('lbl-threshold').textContent = `${currentEngineConfig.signalThresholdPct}%`;
-
-            const badge = document.getElementById('engine-mode-badge');
-            if (badge) badge.textContent = "CUSTOM";
-
-            analyzeEngineWithFilters();
-        }
+        let currentEngineConfig = { minOrderQtyBTC: 0.05, maxOrderAgeSeconds: 600, signalThresholdPct: 65 };
 
         function updateClock() {
             const clockEl = document.getElementById('clock');
             if (clockEl) clockEl.textContent = new Date().toLocaleTimeString('pt-BR');
         }
 
-        async function fetchTicker() {
+        // LEITURA DOS DADOS DA PRIMEXB VIA SCRIPT PYTHON (primexbt_candles.json)
+        async function fetchCandles() {
             try {
-                const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+                const res = await fetch('primexbt_candles.json');
                 const data = await res.json();
-                const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'AVAXUSDT'];
-                const filtered = data.filter(item => symbols.includes(item.symbol));
                 
-                let html = '';
-                filtered.forEach(t => {
-                    const pct = parseFloat(t.priceChangePercent);
-                    const isPos = pct >= 0;
-                    const colorClass = isPos ? 'text-[#00ff41]' : 'text-[#ff3232]';
-                    const sign = isPos ? '+' : '';
-                    html += `
-                        <div class="inline-flex items-center gap-2 px-4 border-r border-[#151515]">
-                            <span class="text-white font-bold">${t.symbol.replace('USDT', '')}</span>
-                            <span class="text-[#888]">$${parseFloat(t.lastPrice).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 })}</span>
-                            <span class="${colorClass} font-semibold">${sign}${pct.toFixed(2)}%</span>
-                        </div>
-                    `;
-                });
-                
-                const tickerEl = document.getElementById('ticker-bar');
-                if (tickerEl) tickerEl.innerHTML = html + html;
-            } catch (e) {
-                console.error("Ticker Error", e);
-            }
-        }
+                if (data && data.candles) {
+                    // Mapeia o formato retornado pela PrimeXBT API v3.0 (/bars)
+                    priceData = data.candles.map(d => ({
+                        time: d.time || d[0],
+                        open: parseFloat(d.open || d[1]),
+                        high: parseFloat(d.high || d[2]),
+                        low: parseFloat(d.low || d[3]),
+                        close: parseFloat(d.close || d[4]),
+                        volume: parseFloat(d.volume || d[5])
+                    }));
 
-        async function fetchCandles(interval = '30m') {
-    try {
-        // Lê o arquivo JSON gerado pelo teu script Python local
-        const res = await fetch('primexbt_candles.json');
-        const data = await res.json();
-        
-        // Mapeia os dados para o formato que o canvas do teu site já utiliza
-        // (Nota: Ajuste os índices do array conforme o formato exato retornado pela rota /bars da PrimeXBT)
-        priceData = data.candles.map(d => ({
-            time: d.time || d[0],
-            open: parseFloat(d.open || d[1]),
-            high: parseFloat(d.high || d[2]),
-            low: parseFloat(d.low || d[3]),
-            close: parseFloat(d.close || d[4]),
-            volume: parseFloat(d.volume || d[5])
-        }));
-
-        const lastPrice = priceData[priceData.length - 1].close;
-        document.getElementById('price-display').textContent = `$${lastPrice.toFixed(2)}`;
-        
-        const entryInput = document.getElementById('calc-entry');
-        if (entryInput && !entryInput.value) {
-            entryInput.value = lastPrice.toFixed(2);
-            calculateRiskReward();
-        }
-
-        await carregarProjecaoPython();
-        renderAll();
-    } catch (e) {
-        console.error("Erro ao carregar candles da PrimeXBT (verifique se o script Python está a correr):", e);
-    }
-}
-
-                const lastPrice = priceData[priceData.length - 1].close;
-                document.getElementById('price-display').textContent = `$${lastPrice.toFixed(2)}`;
-                
-                const entryInput = document.getElementById('calc-entry');
-                if (entryInput && !entryInput.value) {
-                    entryInput.value = lastPrice.toFixed(2);
-                    calculateRiskReward();
+                    if (priceData.length > 0) {
+                        const lastPrice = priceData[priceData.length - 1].close;
+                        document.getElementById('price-display').textContent = `$${lastPrice.toFixed(2)}`;
+                        
+                        const entryInput = document.getElementById('calc-entry');
+                        if (entryInput && !entryInput.value) {
+                            entryInput.value = lastPrice.toFixed(2);
+                            calculateRiskReward();
+                        }
+                    }
                 }
 
                 await carregarProjecaoPython();
-
                 renderAll();
             } catch (e) {
-                console.error("Erro ao descarregar candles:", e);
+                console.error("Aguardando script Python gerar primexbt_candles.json...", e);
             }
         }
 
@@ -585,89 +231,12 @@
                 projectionData = await res.json();
                 const badge = document.getElementById('proj-status');
                 if (projectionData && projectionData.status === "sucesso") {
-                    if (badge) badge.textContent = `✅ Projeção Ativa (${projectionData.total_ocorrencias} padrões, Tol: ${projectionData.tolerancia_usada})`;
+                    if (badge) badge.textContent = `✅ Projeção Ativa (${projectionData.total_ocorrencias} padrões)`;
                 }
             } catch (e) {
                 const badge = document.getElementById('proj-status');
-                if (badge) badge.textContent = "⚠️ Execute o script Python para carregar projeção.";
+                if (badge) badge.textContent = "⚠️ Projeção inativa.";
             }
-        }
-
-        function connectKlinesWS(interval = '30m') {
-            if (klineWs) klineWs.close();
-            const symbol = 'btcusdt';
-            klineWs = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol}@kline_${interval}`);
-            klineWs.onmessage = (event) => {
-                const message = JSON.parse(event.data);
-                if (message.k) {
-                    const k = message.k;
-                    const candle = {
-                        time: k.t,
-                        open: parseFloat(k.o),
-                        high: parseFloat(k.h),
-                        low: parseFloat(k.l),
-                        close: parseFloat(k.c),
-                        volume: parseFloat(k.v)
-                    };
-
-                    if (priceData.length > 0) {
-                        const last = priceData[priceData.length - 1];
-                        if (last.time === candle.time) {
-                            priceData[priceData.length - 1] = candle;
-                        } else {
-                            priceData.push(candle);
-                            if (priceData.length > 150) priceData.shift();
-                        }
-                    }
-
-                    document.getElementById('price-display').textContent = `$${candle.close.toFixed(2)}`;
-                    detectBreakouts(candle.close);
-                    renderAll();
-                }
-            };
-        }
-
-        function connectDepthWS() {
-            if (depthWs) depthWs.close();
-            depthWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@depth10@100ms');
-            depthWs.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                const asks = data.asks.slice(0, 5).reverse();
-                const bids = data.bids.slice(0, 5);
-
-                let html = '';
-                asks.forEach(a => {
-                    html += `<div class="flex justify-between text-[#ff3232]"><span>$${parseFloat(a[0]).toFixed(2)}</span><span>${parseFloat(a[1]).toFixed(3)} BTC</span></div>`;
-                });
-                html += `<div class="border-b border-[#222] my-1"></div>`;
-                bids.forEach(b => {
-                    html += `<div class="flex justify-between text-[#00ff41]"><span>$${parseFloat(b[0]).toFixed(2)}</span><span>${parseFloat(b[1]).toFixed(3)} BTC</span></div>`;
-                });
-
-                const obEl = document.getElementById('orderbook');
-                if (obEl) obEl.innerHTML = html;
-            };
-        }
-
-        function analyzeEngineWithFilters() {
-            const signalPanel = document.getElementById('signal-panel');
-            if (!signalPanel) return;
-
-            const durationFormatted = formatDuration(Date.now() - pressureStartTime);
-            signalPanel.innerHTML = `
-                <div class="flex justify-between items-center text-xs mb-1">
-                    <span class="text-[#777]">ESTADO DO FLUXO:</span>
-                    <span class="text-[#00ff41] font-bold">EQUILIBRADO</span>
-                </div>
-                <div class="flex justify-between items-center text-xs mb-1">
-                    <span class="text-[#777]">VOLUME MÍNIMO:</span>
-                    <span class="text-white font-bold">${currentEngineConfig.minOrderQtyBTC} BTC</span>
-                </div>
-                <div class="flex justify-between items-center text-xs">
-                    <span class="text-[#777]">CRONÓMETRO:</span>
-                    <span class="text-white font-semibold">${durationFormatted}</span>
-                </div>
-            `;
         }
 
         function setPosType(type) {
@@ -711,13 +280,11 @@
 
             const lossVal = capital * (slPct / 100);
             const profitVal = capital * (tpPct / 100);
-            const rr = slPct > 0 ? (tpPct / slPct).toFixed(2) : '0';
 
             document.getElementById('res-sl-price').textContent = `$${slPrice.toFixed(2)}`;
             document.getElementById('res-sl-val').textContent = `-$${lossVal.toFixed(2)}`;
             document.getElementById('res-tp-price').textContent = `$${tpPrice.toFixed(2)}`;
             document.getElementById('res-tp-val').textContent = `+$${profitVal.toFixed(2)}`;
-            document.getElementById('res-rr').textContent = `1 : ${rr}`;
         }
 
         function renderAll() {
@@ -730,21 +297,16 @@
             const h = canvas.height - padding * 2;
 
             let allPrices = priceData.map(c => c.close);
-            if (projectionData && projectionData.superior) {
-                allPrices = allPrices.concat(projectionData.superior, projectionData.inferior);
-            }
-
             const minPrice = Math.min(...allPrices);
             const maxPrice = Math.max(...allPrices);
             const priceRange = maxPrice - minPrice || 1;
 
-            const totalBars = priceData.length + (projectionData && projectionData.media ? projectionData.media.length : 0);
-            const barWidth = w / totalBars;
+            const barWidth = w / priceData.length;
 
             const getX = (index) => padding + index * barWidth + barWidth / 2;
             const getY = (price) => canvas.height - padding - ((price - minPrice) / priceRange) * h;
 
-            // Grid de Fundo
+            // Grid
             ctx.strokeStyle = '#111111';
             ctx.lineWidth = 1;
             for (let i = 0; i <= 5; i++) {
@@ -757,10 +319,10 @@
                 let valPrice = maxPrice - (priceRange / 5) * i;
                 ctx.fillStyle = '#444';
                 ctx.font = '10px JetBrains Mono';
-                ctx.fillText(`$${valPrice.toFixed(0)}`, canvas.width - padding + 5, y + 4);
+                ctx.fillText(`$${valPrice.toFixed(1)}`, canvas.width - padding + 5, y + 4);
             }
 
-            // Desenhar Velas Históricas
+            // Velas
             priceData.forEach((c, i) => {
                 let x = getX(i);
                 let isGreen = c.close >= c.open;
@@ -781,53 +343,6 @@
                 ctx.fillStyle = color;
                 ctx.fillRect(x - barWidth * 0.35, yTop, barWidth * 0.7, candleHeight);
             });
-
-            // Desenhar Projeção Estatística do Python (se carregada)
-            if (projectionData && projectionData.media) {
-                const startIndex = priceData.length;
-                const media = projectionData.media;
-                const superior = projectionData.superior;
-                const inferior = projectionData.inferior;
-
-                // Canal de Probabilidade (20%-80%)
-                ctx.fillStyle = 'rgba(0, 204, 150, 0.15)';
-                ctx.beginPath();
-                superior.forEach((val, idx) => {
-                    let x = getX(startIndex + idx);
-                    let y = getY(val);
-                    if (idx === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                });
-                for (let idx = inferior.length - 1; idx >= 0; idx--) {
-                    let x = getX(startIndex + idx);
-                    let y = getY(inferior[idx]);
-                    ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.fill();
-
-                // Linha Média de Projeção
-                ctx.strokeStyle = '#00cc96';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                media.forEach((val, idx) => {
-                    let x = getX(startIndex + idx);
-                    let y = getY(val);
-                    if (idx === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                });
-                ctx.stroke();
-
-                // Pontos na linha média
-                media.forEach((val, idx) => {
-                    let x = getX(startIndex + idx);
-                    let y = getY(val);
-                    ctx.fillStyle = '#00ff41';
-                    ctx.beginPath();
-                    ctx.arc(x, y, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                });
-            }
         }
 
         function resizeCanvas() {
@@ -838,20 +353,14 @@
         }
         window.addEventListener('resize', resizeCanvas);
 
-        // Inicialização do Sistema
+        // Inicialização
         setInterval(updateClock, 1000);
         updateClock();
-        fetchTicker();
-        setInterval(fetchTicker, 20000);
+        resizeCanvas();
 
-        fetchCandles('30m');
-        connectKlinesWS('30m');
-        connectDepthWS();
-        analyzeEngineWithFilters();
-
-        // Atualizar projeções periodicamente do arquivo JSON do Python
-        setInterval(carregarProjecaoPython, 10000);
-        setInterval(renderAll, 1000);
+        // Atualiza os dados da PrimeXBT lendo o ficheiro do Python a cada 5 segundos
+        fetchCandles();
+        setInterval(fetchCandles, 5000);
     </script>
 </body>
 </html>
